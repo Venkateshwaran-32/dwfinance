@@ -31,43 +31,64 @@ Reads DBS and POSB statement PDFs and sorts every transaction on your own comput
 
 ### Dashboard
 
-"Where it went" has four views of the same spending: share, over time, this period against the one
-before, and a month-by-month pattern.
+"Where it went" has four views of the same spending, behind one switcher: share (a treemap beside ranked
+bars; tap a category to see its top payees), over time, this period against the one before, and a
+month-by-month pattern.
 
-| Over time | Compare | Pattern |
-|---|---|---|
-| ![Monthly stacked bars](docs/screenshots/where-over-time.png) | ![This period against the previous one](docs/screenshots/where-compare.png) | ![Category by month grid](docs/screenshots/where-pattern.png) |
+| Share | Over time |
+|---|---|
+| ![Treemap and ranked bars of spending by category](docs/screenshots/where-share.png) | ![Monthly stacked bars by category](docs/screenshots/where-over-time.png) |
+| **Compare** | **Pattern** |
+| ![This period against the previous one, per category](docs/screenshots/where-compare.png) | ![Category by month grid, darker means more](docs/screenshots/where-pattern.png) |
 
 Monthly spend shows each month against your normal range (the middle half of the 12 months before it).
 Large one-off purchases, such as a laptop or a flight, are shown separately and can be switched off, so a single
-purchase does not look like a spending problem. A "By year" view lines the years up to show seasonal patterns.
+purchase does not look like a spending problem. Only months that are statistical outliers are marked
+"unusually high". "By year" lines the years up to show seasonal patterns.
 
-![Monthly spend against the normal range, with large one-offs separated](docs/screenshots/monthly-spend.png)
+| Normal range | By year |
+|---|---|
+| ![Monthly spend against the normal range, with large one-offs separated](docs/screenshots/monthly-spend.png) | ![One line per year, January to December](docs/screenshots/monthly-by-year.png) |
 
 The money flow shows where money came from and where it went, including what was saved.
 
 ![Money flow from income sources to spending categories](docs/screenshots/money-flow.png)
 
-The calendar colours each day by how heavy the spending was compared with your own usual days. Tap a day to see
-its payments.
+The calendar shows one month at a time with what went out each day. Only your heaviest days are tinted, and
+a green dot marks days money came in. Tap a day to see its payments.
 
 | Calendar | One day's payments |
 |---|---|
-| ![Spending calendar](docs/screenshots/calendar.png) | ![The payments on one day, in a side panel](docs/screenshots/calendar-day.png) |
+| ![Spending calendar for one month](docs/screenshots/calendar.png) | ![The payments on one day, in a side panel](docs/screenshots/calendar-day.png) |
+
+Alerts list unusual days once each, with the reasons, and link to that day's payments. Subscriptions shows
+recurring charges at their current price and flags price changes.
+
+| Alerts | Subscriptions |
+|---|---|
+| ![Alerts, one row per unusual day](docs/screenshots/alerts.png) | ![Subscriptions with a price rise flagged](docs/screenshots/subscriptions.png) |
 
 ### Statements
 
 Every transaction, with search that understands words, exact phrases, exclusions and amounts
-(`grab >10`, `"ong bee lian"`, `-food`, `10..20`).
+(`grab >10`, `"ong bee lian"`, `-food`, `10..20`), filters, sorting, grouping and CSV export.
 
 ![Statements page with advanced search open](docs/screenshots/statements-search.png)
 
+One quick search lists every large one-off purchase: single payments of S$300 or more to payees you do not
+pay regularly.
+
+![Statements filtered to large one-off purchases](docs/screenshots/statements-one-offs.png)
+
 ### Ask AI
 
-Answers come from lookups against your own transactions, not from the model's memory. "See in bank
-statement" opens the exact rows an answer was based on.
+Answers come from lookups against your own transactions, not from the model's memory.
 
 ![Ask AI answering two questions](docs/screenshots/ask-ai.png)
+
+"See in bank statement" opens the exact rows an answer was based on, highlighted among the rest.
+
+![Statements opened from a chat answer, matching rows highlighted](docs/screenshots/statements-from-chat.png)
 
 The model can never change your data by itself. It can only propose a change, which you confirm or cancel.
 
@@ -75,9 +96,11 @@ The model can never change your data by itself. It can only propose a change, wh
 
 ### Review and upload
 
+Review groups unclear payments by payee, so a stall you paid 700 times is one decision.
+
 | Review | Upload |
 |---|---|
-| ![Review list](docs/screenshots/review.png) | ![Upload page](docs/screenshots/upload.png) |
+| ![Review list grouped by payee](docs/screenshots/review.png) | ![Upload page](docs/screenshots/upload.png) |
 
 ### On a phone
 
@@ -98,6 +121,8 @@ You need [Node.js](https://nodejs.org) 20 or newer (free; pick the LTS download)
    | Windows | `Start dwfinance (Windows).bat` |
 
 3. Wait for the browser to open, then press **Fast access**.
+
+   ![The start page with the Fast access button](docs/screenshots/landing.png)
 
 The first start takes a few minutes: it downloads what the app needs (about 1 GB), creates a local
 database and loads 48 synthetic sample statements (a fictional student, 2067 to 2070). Later starts take

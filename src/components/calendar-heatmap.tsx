@@ -7,33 +7,38 @@ import { formatCents } from "@/lib/money";
 
 type Row = { id: string; date: string; merchant: string; category: string; amountCents: number };
 
-const WD = ["S", "M", "T", "W", "T", "F", "S"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const HEAVY_SHARE = 0.1; // the top 10% of spending days in the chosen period get the only fill colour
 
+// Whole dollars inside a day cell (S$12, S$1.5k); exact cents live in the day panel.
+function short(cents: number): string {
+  const d = cents / 100;
+  if (d >= 10000) return `S$${Math.round(d / 1000)}k`;
+  if (d >= 1000) return `S$${(d / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return `S$${Math.round(d)}`;
+}
+
+// One month at a time, like a banking app: each day shows what went out, only the heaviest days are tinted,
+// and days with money in carry a small green dot. Tapping a day opens its payments in a side panel.
 export function CalendarHeatmap({ rows }: { rows: Row[] }) {
   const [sel, setSel] = useState<string | null>(null);
-  const [yearPick, setYearPick] = useState<string | null>(null); // null = the latest year in range
+  const [monthPick, setMonthPick] = useState<string | null>(null); // null = the latest month in range
 
-  const { byDay, monthsList, monthTotal, cuts } = useMemo(() => {
+  const { byDay, monthsList, heavyCut } = useMemo(() => {
     const byDay = new Map<string, { out: number; in: number; count: number }>();
-    const monthTotal = new Map<string, number>();
     for (const r of rows) {
       if (r.amountCents === 0) continue;
       const day = r.date.slice(0, 10);
       const e = byDay.get(day) ?? { out: 0, in: 0, count: 0 };
-      if (r.amountCents < 0) { e.out += -r.amountCents; monthTotal.set(day.slice(0, 7), (monthTotal.get(day.slice(0, 7)) ?? 0) + -r.amountCents); }
-      else e.in += r.amountCents;
+      if (r.amountCents < 0) e.out += -r.amountCents; else e.in += r.amountCents;
       e.count++; byDay.set(day, e);
     }
-    const monthsList = [...new Set([...byDay.keys()].map((d) => d.slice(0, 7)))].sort(); // ALL months in range
-    // Shade by rank, not by share of the biggest day: one huge purchase would otherwise make every other day look pale.
+    const monthsList = [...new Set([...byDay.keys()].map((d) => d.slice(0, 7)))].sort();
     const spends = [...byDay.values()].map((e) => e.out).filter((c) => c > 0).sort((a, b) => a - b);
-    const at = (q: number) => spends[Math.min(spends.length - 1, Math.floor(q * spends.length))] ?? 0;
-    return { byDay, monthsList, monthTotal, cuts: [at(0.5), at(0.8), at(0.95)] };
+    const heavyCut = spends.length ? spends[Math.min(spends.length - 1, Math.floor((1 - HEAVY_SHARE) * spends.length))]! : Infinity;
+    return { byDay, monthsList, heavyCut };
   }, [rows]);
-
-  // 1 = lighter-than-typical day ... 4 = top 5% of spending days.
-  const level = (out: number) => (out > cuts[2] ? 4 : out > cuts[1] ? 3 : out > cuts[0] ? 2 : 1);
 
   const selRows = useMemo(
     () => (sel ? rows.filter((r) => r.date.slice(0, 10) === sel && r.amountCents !== 0).sort((a, b) => a.amountCents - b.amountCents) : []),
@@ -43,81 +48,55 @@ export function CalendarHeatmap({ rows }: { rows: Row[] }) {
   const selIn = selRows.reduce((n, r) => n + (r.amountCents > 0 ? r.amountCents : 0), 0);
 
   if (monthsList.length === 0) return null;
-  // Several years at once is a wall of squares: show one year at a time, newest first.
-  const years = [...new Set(monthsList.map((ym) => ym.slice(0, 4)))];
-  const year = yearPick && years.includes(yearPick) ? yearPick : years[years.length - 1]!;
-  const shown = years.length > 1 ? monthsList.filter((ym) => ym.startsWith(year)) : monthsList;
-  const yearSpend = shown.reduce((n, ym) => n + (monthTotal.get(ym) ?? 0), 0);
+  const ym = monthPick && monthsList.includes(monthPick) ? monthPick : monthsList[monthsList.length - 1]!;
+  const idx = monthsList.indexOf(ym);
+  const [y, m] = ym.split("-").map(Number) as [number, number];
+  const firstDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
+  let monthOut = 0, monthIn = 0;
+  for (let d = 1; d <= days; d++) { const e = byDay.get(`${ym}-${String(d).padStart(2, "0")}`); if (e) { monthOut += e.out; monthIn += e.in; } }
 
   return (
     <section className="card card-pad">
-      <h2 className="card-title">Spending calendar</h2>
-      <p className="card-sub">
-        {years.length > 1 ? `${year} · ` : ""}{shown.length} month{shown.length === 1 ? "" : "s"} · <span className="amount">{formatCents(yearSpend)}</span> spent
-      </p>
-      {years.length > 1 && (
-        <div className="cal-years" role="group" aria-label="Year to show">
-          {years.map((y) => (
-            <button key={y} type="button" className="cal-year" aria-pressed={y === year} onClick={() => { setYearPick(y); setSel(null); }}>{y}</button>
-          ))}
+      <div className="calm-head">
+        <h2 className="card-title">Spending calendar</h2>
+        <div className="calm-nav">
+          <button type="button" className="calm-arrow" onClick={() => setMonthPick(monthsList[idx - 1]!)} disabled={idx === 0} aria-label="Previous month">Prev</button>
+          <select className="calm-select" value={ym} onChange={(e) => setMonthPick(e.target.value)} aria-label="Month to show">
+            {[...monthsList].reverse().map((x) => <option key={x} value={x}>{MONTHS[Number(x.slice(5, 7)) - 1]} {x.slice(0, 4)}</option>)}
+          </select>
+          <button type="button" className="calm-arrow" onClick={() => setMonthPick(monthsList[idx + 1]!)} disabled={idx === monthsList.length - 1} aria-label="Next month">Next</button>
         </div>
-      )}
-      <ul className="cal-legend" aria-label="Colour key">
-        <li><span className="cal-swatch cal-none" aria-hidden="true" />No transactions</li>
-        <li>
-          <span className="cal-swatch cal-out-1" aria-hidden="true" /><span className="cal-swatch cal-out-2" aria-hidden="true" />
-          <span className="cal-swatch cal-out-3" aria-hidden="true" /><span className="cal-swatch cal-out-4" aria-hidden="true" />
-          Spending, light to heavy
-        </li>
-        <li><span className="cal-swatch cal-in" aria-hidden="true" />More money in than out</li>
+      </div>
+      <p className="card-sub">
+        <span className="amount">{formatCents(monthOut)}</span> spent{monthIn ? <> · <span className="amount calm-in-text">{formatCents(monthIn)}</span> in</> : null}
+      </p>
+      <ul className="calm-key" aria-label="Key">
+        <li><span className="calm-key-heavy" aria-hidden="true" />One of your heaviest days</li>
+        <li><span className="calm-dot" aria-hidden="true" />Money came in</li>
       </ul>
 
-      <div className="cal-scroll">
-        <div className="cal-months">
-          {shown.map((ym) => {
-            const [y, m] = ym.split("-").map(Number);
-            const firstDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
-            const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
-            const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
-            return (
-              <div key={ym}>
-                <div className="cal-month-head">
-                  <strong>{MONTHS[m - 1]} {y}</strong>
-                  <span className="amount">{formatCents(monthTotal.get(ym) ?? 0)}</span>
-                </div>
-                <div className="cal-grid">
-                  {WD.map((w, i) => <div key={`h${i}`} className="cal-wd" aria-hidden="true">{w}</div>)}
-                  {cells.map((d, i) => {
-                    if (d === null) return <div key={`b${i}`} />;
-                    const key = `${ym}-${String(d).padStart(2, "0")}`;
-                    const e = byDay.get(key);
-                    // Green when more came in than went out that day; otherwise red, darker for heavier spending.
-                    const tone = !e ? "cal-none" : e.in > e.out ? "cal-in" : `cal-out-${level(e.out)}`;
-                    const isSel = sel === key;
-                    const what = !e ? "no transactions" : [e.out ? `${formatCents(e.out)} spent` : "", e.in ? `${formatCents(e.in)} in` : ""].filter(Boolean).join(", ");
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        className={`cal-day cal-cell ${tone}${isSel ? " sel" : ""}`}
-                        onClick={() => setSel(isSel ? null : key)}
-                        aria-pressed={isSel}
-                        title={`${key} · ${what}${e ? ` · ${e.count} txns` : ""}`}
-                        aria-label={`${key}, ${what}`}
-                      >
-                        {d}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      <div className="calm-grid" role="grid" aria-label={`${MONTHS[m - 1]} ${y}`}>
+        {WD.map((w) => <div key={w} className="calm-wd" aria-hidden="true">{w}</div>)}
+        {cells.map((d, i) => {
+          if (d === null) return <div key={`b${i}`} aria-hidden="true" />;
+          const key = `${ym}-${String(d).padStart(2, "0")}`;
+          const e = byDay.get(key);
+          const heavy = Boolean(e && e.out >= heavyCut && e.out > 0);
+          const what = !e ? "no transactions" : [e.out ? `${formatCents(e.out)} spent` : "", e.in ? `${formatCents(e.in)} in` : ""].filter(Boolean).join(", ");
+          return (
+            <button key={key} type="button" className={`calm-day${heavy ? " heavy" : ""}${!e ? " empty" : ""}${sel === key ? " sel" : ""}`}
+              onClick={() => setSel(key)} aria-label={`${d} ${MONTHS[m - 1]}: ${what}${heavy ? ", one of your heaviest days" : ""}`}>
+              <span className="calm-num">{d}{e?.in ? <span className="calm-dot" aria-hidden="true" /> : null}</span>
+              <span className="calm-amt">{e?.out ? short(e.out) : ""}</span>
+            </button>
+          );
+        })}
       </div>
 
       <DayPanel day={sel} rows={selRows} selOut={selOut} selIn={selIn} onClose={() => setSel(null)}
-        onStep={(dir) => { const days = [...byDay.keys()].sort(); const i = sel ? days.indexOf(sel) : -1; const next = days[i + dir]; if (next) { setSel(next); setYearPick(next.slice(0, 4)); } }} />
+        onStep={(dir) => { const all = [...byDay.keys()].sort(); const i = sel ? all.indexOf(sel) : -1; const next = all[i + dir]; if (next) { setSel(next); setMonthPick(next.slice(0, 7)); } }} />
     </section>
   );
 }
