@@ -2,6 +2,8 @@
 import "@/styles/dashboard-cards.css";
 import { useState } from "react";
 import Link from "next/link";
+import { SpendTrendCard } from "./spend-trend";
+import type { TrendMonth } from "@/lib/spend-trend";
 import { Treemap, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, type TreemapNode } from "recharts";
 import { categoryColor, INK } from "@/lib/category-colors";
 import { formatCents } from "@/lib/money";
@@ -23,8 +25,9 @@ function compactSgd(cents: number): string {
 }
 
 export function DashboardCharts({
-  categories, trend, breakdown, trendLabel = "Monthly spend", monthly, compare,
+  categories, trend, breakdown, trendLabel = "Monthly spend", monthly, compare, spendTrend,
 }: {
+  spendTrend: TrendMonth[] | null; // null = short period, show the daily line instead
   monthly: Monthly[];
   compare: Compare;
   categories: { name: string; value: number }[];
@@ -140,7 +143,7 @@ export function DashboardCharts({
         )}
       </section>
 
-      <section className="card card-pad">
+      {spendTrend ? <SpendTrendCard data={spendTrend} /> : <section className="card card-pad">
         <h2 className="card-title">{trendLabel}</h2>
         <div className="trend-chart">
           <ResponsiveContainer width="100%" height="100%">
@@ -153,7 +156,7 @@ export function DashboardCharts({
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </section>}
     </div>
   );
 }

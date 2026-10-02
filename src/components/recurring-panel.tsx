@@ -4,10 +4,9 @@ import { useState } from "react";
 import { categoryColor } from "@/lib/category-colors";
 import { formatCents } from "@/lib/money";
 
-export type Recurring = {
-  name: string; count: number; avg: number; total: number;
-  cadence: string; category: string; instances: { date: string; cents: number }[];
-};
+import type { Recurring } from "@/lib/recurring";
+
+export type { Recurring };
 
 export function RecurringPanel({ recurring }: { recurring: Recurring[] }) {
   const [open, setOpen] = useState<string | null>(null);

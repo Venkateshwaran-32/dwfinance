@@ -85,8 +85,9 @@ or amount are left out and listed.
 
 `src/server/categorize.ts`, `src/server/merchants.ts`
 
-The categories are: Groceries, Transport, Food & Dining, Utilities, Telecom, Shopping, Subscriptions,
-Health, Income, Cash, Transfers, Other.
+The categories are: Groceries, Transport, Food & Dining, Utilities, Telecom, Housing, Education, Travel,
+Shopping, Subscriptions, Health, Income, Cash, Transfers, Other. Housing, Education and Travel only ever
+apply to money going out, so a salary from a tuition centre stays Income.
 
 For a DBS or POSB statement the steps are tried in this order, and the first one that answers wins:
 
@@ -111,7 +112,9 @@ pretend to know: it makes a marked guess and asks you.
 
 `src/server/rules.ts`
 
-On the Review page (or through Ask AI) you confirm the category for a payee one time. That does two things:
+On the Review page (or through Ask AI) you confirm the category for a payee one time. The Review page shows
+one row per payee with how many payments it covers and their usual amount, so a payee paid 700 times is one
+decision. Confirming does two things:
 
 1. Saves a rule for that payee.
 2. Updates every existing transaction for that payee, and removes them from the Review list.
@@ -129,7 +132,9 @@ period you picked:
 
 | Section | Code |
 |---|---|
-| Where it went, monthly spend | `src/app/dashboard/page.tsx`, `src/components/dashboard-charts.tsx` |
+| Where it went | `src/app/dashboard/page.tsx`, `src/components/dashboard-charts.tsx` |
+| Monthly spend, normal range and large one-offs | `src/lib/spend-trend.ts`, `src/components/spend-trend.tsx` |
+| Recurring payments | `src/lib/recurring.ts` |
 | Money flow | `src/lib/cashflow.ts` |
 | Subscriptions and price changes | `src/server/subscriptions.ts` |
 | Alerts (large, duplicate, new merchant, spikes) | `src/server/alerts.ts` |

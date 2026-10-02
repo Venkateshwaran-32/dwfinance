@@ -9,7 +9,6 @@ const ITEMS: [string, string][] = [
   ["/dashboard/upload", "Upload"],
   ["/dashboard/review", "Review"],
   ["/dashboard/utilities", "Utilities"],
-  ["/dashboard/connect-dbs", "Connect DBS"],
 ];
 
 export function DashboardNav() {

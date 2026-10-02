@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 export type StatementFilterValues = {
-  q: string; month: string; category: string; dir: "" | "out" | "in"; min: string; max: string; review: boolean; all: boolean;
+  q: string; month: string; category: string; dir: "" | "out" | "in"; min: string; max: string; review: boolean; all: boolean; oneOff: boolean;
   // advanced
   not: string; from: string; to: string; cats: string[]; types: string[]; sort: string; group: string; advOpen: boolean;
 };
@@ -83,6 +83,7 @@ export function StatementFilters({
       <details className="stmt-adv" open={advOpen} onToggle={(e) => setAdvOpen(e.currentTarget.open)}>
         <summary>Advanced search</summary>
         {advOpen && <input type="hidden" name="adv" value="1" />}
+        {values.oneOff && <input type="hidden" name="oneoff" value="1" />}
         <div className="stmt-adv-grid">
           <div className="stmt-field stmt-field-wide">
             <span className="stmt-label" id="adv-range">Date range</span>

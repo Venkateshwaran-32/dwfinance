@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
-import { cleanMerchant } from "@/server/merchants";
+import { cleanMerchant, normalizeKey } from "@/server/merchants";
+import { recurringPayees, isLargeOneOff } from "@/lib/spend-trend";
 import { buildSearch, csvCell, matches, paymentType, sortRows, PAY_TYPES, type SearchParams } from "@/server/statement-search";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,9 @@ export async function GET(req: Request) {
     where: { userId },
     select: { date: true, description: true, counterparty: true, amountCents: true, category: true, needsReview: true },
   });
-  const rows = sortRows(s.active ? txns.filter((t) => matches(s, t)) : txns, s.sort === "default" ? "newest" : s.sort);
+  const recurring = s.oneOff ? recurringPayees(txns.map((t) => ({ date: t.date, amountCents: t.amountCents, payeeKey: normalizeKey(t.description, t.counterparty) }))) : new Set<string>();
+  const isOneOff = (t: { date: Date; amountCents: number; description: string; counterparty: string | null }) => isLargeOneOff({ date: t.date, amountCents: t.amountCents, payeeKey: normalizeKey(t.description, t.counterparty) }, recurring);
+  const rows = sortRows(s.active ? txns.filter((t) => matches(s, t, isOneOff)) : txns, s.sort === "default" ? "newest" : s.sort);
 
   const typeLabel = (d: string) => PAY_TYPES.find(([k]) => k === paymentType(d))![1];
   const lines = [

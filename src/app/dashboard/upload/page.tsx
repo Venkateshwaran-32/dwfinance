@@ -2,7 +2,6 @@
 import "@/styles/upload.css";
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { CompoundCalculator } from "@/components/compound-calculator";
 import { ArrowCTA, ArrowHero } from "@/components/arrow-cta";
 import { useUpload } from "@/components/upload-provider";
 
@@ -128,7 +127,6 @@ export default function UploadPage() {
         </ol>
       </section>
 
-      <CompoundCalculator title="Compound interest calculator" />
     </div>
   );
 }

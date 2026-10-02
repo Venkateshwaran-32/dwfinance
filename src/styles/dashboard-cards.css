@@ -162,3 +162,46 @@ a.pat-cell:hover, a.pat-cell:focus-visible { outline: 2px solid var(--ink); outl
   .cmp-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name amts" "change amts" "bars bars"; }
   .pat-cell { width: 20px; height: 20px; }
 }
+
+/* Monthly spend: normal range + trend, and by year */
+.card { --band: #e9ebf0; --bar-calm: #b9bec9; --bar-large: #f2b84b; }
+.trend-tools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; margin-top: 10px; }
+.trend-toggle { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.trend-hint { font-weight: 400; font-size: 12px; color: var(--text-dim); }
+.trend-link { font-size: 13px; }
+.trend-key { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0 4px; padding: 0; font-size: 12px; color: var(--text-dim); }
+.trend-key li { display: inline-flex; align-items: center; gap: 6px; }
+.trend-key .k { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.k-every { background: var(--bar-calm); } .k-large { background: var(--bar-large); } .k-above { background: var(--ink); } .k-band { background: var(--band); border: 1px solid var(--border); }
+.k-median { height: 0 !important; border-top: 2px dashed var(--ink); border-radius: 0 !important; }
+.k-line { height: 3px !important; width: 16px !important; }
+.trend-note { margin: 8px 0 0; font-size: 12px; color: var(--text-dim); }
+.trend-tip { display: grid; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; font-size: 13px; max-width: 300px; color: var(--text-dim); }
+.trend-tip strong { color: var(--text); }
+
+/* Calendar day panel: slides in from the right; bottom sheet on phones */
+.day-panel { position: fixed; inset: 0 0 0 auto; margin: 0; height: 100dvh; max-height: 100dvh; width: min(420px, 100vw); max-width: 100vw; border: none; padding: 0; background: var(--surface); color: var(--text); box-shadow: -12px 0 40px rgba(21, 23, 28, 0.18); }
+.day-panel[open] { animation: day-in 0.18s ease-out; }
+.day-panel::backdrop { background: rgba(21, 23, 28, 0.35); }
+@keyframes day-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.day-panel-body { display: flex; flex-direction: column; height: 100%; padding: 20px; gap: 14px; box-sizing: border-box; }
+.day-panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.day-panel-head h3 { margin: 0; font-size: 18px; }
+.day-panel-x { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.day-panel-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.day-panel-totals div { background: var(--surface-2); border-radius: 12px; padding: 8px 10px; display: grid; gap: 2px; }
+.day-panel-totals span { font-size: 12px; color: var(--text-dim); }
+.day-panel-totals strong { font-size: 15px; }
+.day-panel .amount.out { color: var(--danger); } .day-panel .amount.in { color: var(--pos); font-weight: 700; }
+.day-panel-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; display: grid; align-content: start; }
+.day-panel-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.day-panel-list li:first-child { border-top: none; }
+.day-panel-foot { display: flex; flex-wrap: wrap; gap: 8px; }
+.day-panel-foot .btn:last-child { margin-left: auto; }
+@media (max-width: 640px) {
+  .day-panel { inset: auto 0 0 0; width: 100vw; height: auto; max-height: 85dvh; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px rgba(21, 23, 28, 0.18); }
+  .day-panel[open] { animation-name: day-up; }
+  @keyframes day-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .day-panel-body { max-height: 85dvh; }
+  .day-panel-foot .btn:last-child { margin-left: 0; flex-basis: 100%; text-align: center; }
+}

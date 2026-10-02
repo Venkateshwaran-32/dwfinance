@@ -11,7 +11,7 @@ computer.
 | `src/app/actions.ts` | Server actions: sign up, log in, log out, confirm a review item, delete a statement |
 | `src/components/` | The pieces of each screen: header, charts, money flow, calendar, chat panel, statement filters |
 | `src/server/` | The logic. Runs only on the server. See the table below. |
-| `src/lib/` | Small shared helpers: money formatting, auth, database client, category colours, chat history |
+| `src/lib/` | Shared helpers: money formatting, auth, database client, category colours, chat history, and the pure statistics behind monthly spend (`spend-trend.ts`), recurring payments (`recurring.ts`) and the Review grouping (`review-groups.ts`) |
 | `src/styles/` | Component styles. Shared tokens are in `src/app/globals.css`. |
 | `prisma/schema.prisma` | The data model |
 | `scripts/` | Setup, the launcher, and the synthetic statement generator |

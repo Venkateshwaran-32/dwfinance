@@ -42,7 +42,7 @@ export function SubscriptionCard({
                 </span>
                 {sub.priceChange && (
                   <span className="dc-flag">
-                    Price up from <span className="amount">{formatCents(sub.priceChange.fromCents)}</span> to{" "}
+                    Price {sub.priceChange.toCents >= sub.priceChange.fromCents ? "up" : "down"} from <span className="amount">{formatCents(sub.priceChange.fromCents)}</span> to{" "}
                     <span className="amount">{formatCents(sub.priceChange.toCents)}</span>
                   </span>
                 )}

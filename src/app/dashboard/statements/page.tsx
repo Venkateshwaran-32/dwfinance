@@ -2,15 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
-import { cleanMerchant } from "@/server/merchants";
+import { cleanMerchant, normalizeKey } from "@/server/merchants";
 import { CATEGORIES } from "@/server/categorize";
+import { recurringPayees, isLargeOneOff } from "@/lib/spend-trend";
 import { buildSearch, matches, sortRows, GROUPS, PAY_TYPES, SORTS, type SearchParams } from "@/server/statement-search";
 import { StatementFilters, type StatementFilterValues } from "@/components/statement-filters";
 import { DeleteStatementButton } from "@/components/delete-statement-button";
 
 export const dynamic = "force-dynamic";
 
-const KEYS = ["q", "not", "category", "cats", "from", "to", "month", "dir", "min", "max", "review", "type", "sort", "group", "all", "adv"] as const;
+const KEYS = ["q", "not", "category", "cats", "from", "to", "month", "dir", "min", "max", "review", "type", "sort", "group", "all", "adv", "oneoff"] as const;
 const money = (cents: number) => (cents / 100).toLocaleString("en-SG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const monthLabel = (d: Date) => d.toLocaleDateString("en-SG", { month: "long", year: "numeric", timeZone: "UTC" });
 const monthName = (ym: string) => monthLabel(new Date(`${ym}-01T00:00:00Z`));
@@ -40,7 +41,10 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
     select: { id: true, uploadedAt: true, issues: true, transactions: { orderBy: { date: "asc" }, select: { id: true, date: true, description: true, counterparty: true, amountCents: true, category: true, needsReview: true } } },
   });
 
-  const isHit = (t: Row) => matches(s, t);
+  // Large one-offs need the whole history (a payee paid in 3+ months is regular), so build that once here.
+  const recurring = s.oneOff ? recurringPayees(statements.flatMap((st) => st.transactions).map((t) => ({ date: t.date, amountCents: t.amountCents, payeeKey: normalizeKey(t.description, t.counterparty) }))) : new Set<string>();
+  const isOneOff = (t: { date: Date; amountCents: number; description: string; counterparty: string | null }) => isLargeOneOff({ date: t.date, amountCents: t.amountCents, payeeKey: normalizeKey(t.description, t.counterparty) }, recurring);
+  const isHit = (t: Row) => matches(s, t, isOneOff);
   const all = statements
     .filter((st) => st.transactions.length > 0)
     .map((st) => ({ ...st, start: st.transactions[0].date, hits: st.transactions.filter(isHit).length }))
@@ -67,12 +71,13 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
   const values: StatementFilterValues = {
     q: s.q, month: s.month, category: sp.category && s.categories.includes(sp.category) ? sp.category : "", dir: s.dir, min: s.minField, max: s.maxField,
     review: s.review, all: s.showAll, not: s.not, from: s.fromIso, to: s.toIso,
-    cats: (sp.cats ?? "").split(",").filter((c) => s.categories.includes(c)), types: s.types, sort: s.sort, group: s.group, advOpen: advActive || sp.adv === "1",
+    cats: (sp.cats ?? "").split(",").filter((c) => s.categories.includes(c)), types: s.types, sort: s.sort, group: s.group, advOpen: advActive || sp.adv === "1", oneOff: s.oneOff,
   };
 
   // One removable chip per active filter.
   const chips: { label: string; href: string }[] = [];
   const chip = (label: string, patch: SearchParams) => chips.push({ label, href: hrefWith(sp, patch) });
+  if (s.oneOff) chip("Large one-offs (S$300+, not regular)", { oneoff: undefined });
   if (s.q) chip(`Search: ${s.q}`, { q: undefined });
   if (s.not) chip(`Not: ${s.not}`, { not: undefined });
   if (s.month) chip(monthName(s.month), { month: undefined });
@@ -88,6 +93,7 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
   const presets = [
     preset("PayNow to people", { type: "paynow", dir: "out", group: "payee" }),
     preset("Large payments (S$100+)", { q: ">=100", dir: "out", sort: "largest", group: "none" }),
+    preset("Large one-offs (S$300+)", { oneoff: "1", sort: "largest", group: "none" }),
     preset("Needs review, by payee", { review: "1", group: "payee" }),
     preset("Subscriptions", { category: "Subscriptions", group: "payee" }),
     preset("Income", { dir: "in" }),

@@ -12,7 +12,7 @@ export type Categorized = RawTxn & {
 };
 
 const CATEGORIES = [
-  "Groceries", "Transport", "Food & Dining", "Utilities", "Telecom", "Shopping",
+  "Groceries", "Transport", "Food & Dining", "Utilities", "Telecom", "Housing", "Education", "Travel", "Shopping",
   "Subscriptions", "Health", "Income", "Cash", "Transfers", "Other",
 ] as const;
 
@@ -28,7 +28,7 @@ export async function categorize(rows: RawTxn[], savedRules: Map<string, Cat>): 
   rows.forEach((row, i) => {
     const saved = savedRules.get(normalizeKey(row.description, row.counterparty));
     if (saved) { out[i] = { ...row, ...saved, confidence: 1, needsReview: false, source: "user" }; return; }
-    const rule = ruleCategorize(row.description, row.counterparty);
+    const rule = ruleCategorize(row.description, row.counterparty, row.amountCents);
     if (rule) { out[i] = { ...row, ...rule, confidence: 0.9, needsReview: false, source: "rule" }; return; }
     ambiguous.push({ i, row });
     out[i] = { ...row, ...heuristic(row), source: "fallback" };
@@ -48,7 +48,7 @@ export function categorizeDeterministic(rows: RawTxn[], savedRules: Map<string, 
   return rows.map((row) => {
     const saved = savedRules.get(normalizeKey(row.description, row.counterparty));
     if (saved) return { ...row, ...saved, confidence: 1, needsReview: false, source: "user" };
-    const rule = ruleCategorize(row.description, row.counterparty);
+    const rule = ruleCategorize(row.description, row.counterparty, row.amountCents);
     if (rule) return { ...row, ...rule, confidence: 0.9, needsReview: false, source: "rule" };
     return { ...row, ...heuristic(row), source: "fallback" };
   });
@@ -73,6 +73,10 @@ Use common sense on the merchant name, even inside NETS QR / PayNow narration:
 - stalls, hawkers, kopitiam, food courts, "drink stall", "beverages", bakeries, restaurants, cafes -> Food & Dining
 - NTUC/FairPrice/Sheng Siong/Giant/7-Eleven/Cheers -> Groceries
 - Grab/Gojek/MRT/bus/EZ-Link/petrol -> Transport
+- rent, co-living, hall of residence, hostel, landlord, HDB/town council (money OUT) -> Housing
+- tuition/school/university fees, textbooks, bookstore, courses, exam fees (money OUT) -> Education
+- airlines, hotels, Agoda/Booking.com/Airbnb/Klook/Trip.com/Expedia, travel (money OUT) -> Travel
+- money IN from a company (even a tuition centre or school) is Income, never Education
 - PayNow/transfer to a NAMED INDIVIDUAL (a person's name) -> Transfers, needsReview=true, confidence<=0.6
 Only use "Other" when the name is genuinely meaningless. JSON only.`,
     JSON.stringify(items),

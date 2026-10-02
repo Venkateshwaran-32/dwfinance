@@ -23,9 +23,9 @@ Reads DBS and POSB statement PDFs and sorts every transaction on your own comput
 | Feature | What you get |
 |---|---|
 | Read a statement | Add a PDF. Every transaction is found, each amount is worked out from the statement's own running balance, and every line is checked. A statement that does not add up is saved with a "Needs checking" label saying exactly what is wrong. |
-| Sort into categories | Known Singapore merchants are sorted by rules. Unclear payees go to a Review list instead of being guessed silently. |
+| Sort into categories | Known Singapore merchants are sorted into 15 categories (including Housing, Education and Travel) by rules. Unclear payees go to a Review list, one row per payee, instead of being guessed silently. |
 | Teach it once | Tell it who a PayNow payee is. The answer is saved and applied to every past and future payment to that payee. |
-| Dashboard | Money in, money out, saved; where it went (four views); money flow; calendar; subscriptions; alerts. |
+| Dashboard | Money in, money out, saved; where it went (four views); monthly spend against your normal range; money flow; a calendar you can tap for each day's payments; subscriptions; alerts. |
 | Statements | Search, filter, group and export every transaction. |
 | Ask AI (optional) | Ask questions in plain English. A model on your own computer answers, and each answer links to the transactions behind it. |
 
@@ -38,13 +38,22 @@ before, and a month-by-month pattern.
 |---|---|---|
 | ![Monthly stacked bars](docs/screenshots/where-over-time.png) | ![This period against the previous one](docs/screenshots/where-compare.png) | ![Category by month grid](docs/screenshots/where-pattern.png) |
 
+Monthly spend shows each month against your normal range (the middle half of the 12 months before it).
+Large one-off purchases, such as a laptop or a flight, are shown separately and can be switched off, so a single
+purchase does not look like a spending problem. A "By year" view lines the years up to show seasonal patterns.
+
+![Monthly spend against the normal range, with large one-offs separated](docs/screenshots/monthly-spend.png)
+
 The money flow shows where money came from and where it went, including what was saved.
 
 ![Money flow from income sources to spending categories](docs/screenshots/money-flow.png)
 
-The calendar colours each day by how heavy the spending was compared with your own usual days.
+The calendar colours each day by how heavy the spending was compared with your own usual days. Tap a day to see
+its payments.
 
-![Spending calendar](docs/screenshots/calendar.png)
+| Calendar | One day's payments |
+|---|---|
+| ![Spending calendar](docs/screenshots/calendar.png) | ![The payments on one day, in a side panel](docs/screenshots/calendar-day.png) |
 
 ### Statements
 
@@ -140,7 +149,7 @@ The app uses whichever model is loaded. Until one is running, the Ask AI page sh
   handed to the local AI model, which is slow and can make mistakes.
 - **Ask AI was tested with the two models above**, on one Mac. Smaller models answer faster but pick the
   wrong lookup more often.
-- **"Connect DBS" is a placeholder page.** Nothing in this app connects to DBS or to any bank.
+- **Nothing in this app connects to DBS or to any bank.** It only reads PDFs you add yourself.
 - **The sample data is synthetic.** Any resemblance to real people or payments is coincidental.
 
 ## More documentation

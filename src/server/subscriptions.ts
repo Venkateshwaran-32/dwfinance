@@ -61,7 +61,8 @@ export function computeSubscriptions(txns: Transaction[]): SubscriptionSummary {
     const previous = earlier[earlier.length - 1];
     const fresh = current.length < 2;
     if (fresh && !previous) continue;
-    const basis = fresh ? previous! : current;
+    // Always show (and total) the CURRENT price: after a fresh change that is the latest charge itself.
+    const amountCents = fresh ? current[0]! : medianCents(current);
     const priceChange = fresh ? { fromCents: medianCents(previous!), toCents: current[0]! } : undefined;
 
     const lastCharge = charges[charges.length - 1];
@@ -71,7 +72,7 @@ export function computeSubscriptions(txns: Transaction[]): SubscriptionSummary {
 
     items.push({
       name,
-      amountCents: medianCents(basis),
+      amountCents,
       cadence: cadenceLabel(avgGapDays),
       nextDate: addDays(lastCharge.date, avgGapDays),
       lastDate: lastCharge.date,
@@ -85,7 +86,7 @@ export function computeSubscriptions(txns: Transaction[]): SubscriptionSummary {
 
   return {
     totalMonthlyCents: items.reduce((sum, item) => sum + monthlyCents(item.amountCents, item.avgGapDays), 0),
-    items: items.map(({ avgGapDays: _avgGapDays, ...item }) => item),
+    items: items.map(({ avgGapDays, ...item }) => { void avgGapDays; return item; }),
   };
 }
 

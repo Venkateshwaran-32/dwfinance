@@ -19,7 +19,14 @@ describe("computeSubscriptions", () => {
   });
   it("flags a price change only when it is the latest charge", () => {
     const txns = [...months(1, 11).map((m) => charge("SPOTIFY", m, 5, 1098)), charge("SPOTIFY", "2067-12", 5, 1398)];
-    expect(find(txns, "SPOTIFY")).toMatchObject({ amountCents: 1098, priceChange: { fromCents: 1098, toCents: 1398 } });
+    expect(find(txns, "SPOTIFY")).toMatchObject({ amountCents: 1398, priceChange: { fromCents: 1098, toCents: 1398 } });
+  });
+  it("shows and totals the current price after a fresh price rise", () => {
+    const txns = [...months(1, 11).map((m) => charge("SPOTIFY", m, 5, 1098)), charge("SPOTIFY", "2067-12", 5, 1398),
+      ...months(1, 12).map((m) => charge("NETFLIX.COM", m, 12, 1798))];
+    const summary = computeSubscriptions(txns);
+    expect(summary.items.find((x) => x.name === "SPOTIFY")?.amountCents).toBe(1398);
+    expect(summary.totalMonthlyCents).toBe(1398 + 1798);
   });
   it("drops a subscription that stopped being charged", () => {
     const txns = [...months(1, 8).map((m) => charge("BOULDER BARN CLIMBING", m, 9, 6800)), ...months(1, 24).map((m) => charge("SPOTIFY", m, 5, 1098))];

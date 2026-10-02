@@ -1,5 +1,5 @@
 import type { Transaction } from "@prisma/client";
-import { cleanMerchant, isPayNowToPerson } from "@/server/merchants";
+import { cleanMerchant, isTransferToPerson } from "@/server/merchants";
 
 // Money flow: income sources -> total -> categories + saved.
 // Everything is in cents and both sides always balance: sum(sources) === totalCents === sum(uses).
@@ -9,7 +9,7 @@ export type MoneyFlow = {
   totalCents: number;
   incomeCents: number;
   spendCents: number;
-  paynowPeopleCents: number; // part of spendCents that went to named people via PayNow / NETS QR
+  paynowPeopleCents: number; // part of spendCents sent to named people by PayNow or transfer (NETS QR stall payments excluded)
 };
 
 const TOP_SOURCE_COUNT = 3;
@@ -29,7 +29,7 @@ export function buildMoneyFlow(txns: Transaction[]): MoneyFlow {
       spendCents += cents;
       const category = t.category.trim() || "Uncategorized";
       byCategory.set(category, (byCategory.get(category) ?? 0) + cents);
-      if (isPayNowToPerson(t.description, t.counterparty)) paynowPeopleCents += cents;
+      if (isTransferToPerson(t.description, t.counterparty)) paynowPeopleCents += cents;
     }
   }
 

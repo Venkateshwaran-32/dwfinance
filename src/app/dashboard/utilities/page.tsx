@@ -1,29 +1,26 @@
 "use client";
 import { useState } from "react";
+import { CompoundCalculator } from "@/components/compound-calculator";
+import { formatCents } from "@/lib/money";
 
-const TARIFF = 0.2972; // SGD per kWh incl. GST, SP Group regulated tariff Apr–Jun 2026
+const TARIFF_CENTS_PER_KWH = 29.72; // SP Group regulated tariff incl. GST, Apr to Jun 2026
 
 export default function UtilitiesPage() {
   const [kwh, setKwh] = useState(320);
-  const sgd = kwh * TARIFF;
   return (
-    <section style={{ maxWidth: 560 }}>
-      <h1>Utilities tracker</h1>
-      <p style={{ color: "var(--text-dim)" }}>
-        Mock SP Group smart-meter reading → cost at the real regulated tariff
-        (<span className="mono">{(TARIFF * 100).toFixed(2)}¢/kWh</span> inc. GST, Apr–Jun 2026).
-      </p>
-      <div className="card" style={{ padding: 20, display: "grid", gap: 14 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: 13, color: "var(--text-dim)" }}>This month&apos;s usage: <span className="mono">{kwh} kWh</span></span>
-          <input type="range" min={0} max={1000} value={kwh} onChange={(e) => setKwh(Number(e.target.value))} aria-label="kWh used" />
+    <div className="tools">
+      <h1>Utilities</h1>
+      <p className="tools-lede">Small calculators that sit next to your spending. They use the numbers you type, not your statements.</p>
+      <CompoundCalculator title="Compound interest calculator" />
+      <section className="card card-pad">
+        <h2 className="card-title">Electricity bill estimate</h2>
+        <p className="card-sub">At the SP Group regulated tariff of {TARIFF_CENTS_PER_KWH} cents per kWh including GST (Apr to Jun 2026).</p>
+        <label className="tools-field">
+          <span>This month&apos;s usage: <strong>{kwh} kWh</strong></span>
+          <input type="range" min={0} max={1000} value={kwh} onChange={(e) => setKwh(Number(e.target.value))} aria-label="Electricity used this month, in kWh" />
         </label>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <span style={{ color: "var(--text-dim)" }}>Estimated bill</span>
-          <span className="mono" style={{ fontSize: 28, color: "var(--accent)" }}>${sgd.toFixed(2)}</span>
-        </div>
-      </div>
-      <p style={{ color: "var(--text-dim)", fontSize: 12, marginTop: 12 }}>Mock data; live SP Group smart-meter integration is a V2 feature.</p>
-    </section>
+        <p className="tools-result"><span>Estimated bill</span><strong className="amount">{formatCents(Math.round(kwh * TARIFF_CENTS_PER_KWH))}</strong></p>
+      </section>
+    </div>
   );
 }

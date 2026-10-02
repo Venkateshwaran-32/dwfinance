@@ -1,6 +1,7 @@
 "use client";
 import "@/styles/dashboard-cards.css";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { categoryColor } from "@/lib/category-colors";
 import { formatCents } from "@/lib/money";
 
@@ -115,34 +116,60 @@ export function CalendarHeatmap({ rows }: { rows: Row[] }) {
         </div>
       </div>
 
-      {sel && (
-        <>
-          <div className="cal-day-head">
-            <strong>{sel}</strong>
-            <span className="dc-meta">
-<span className="amount">{formatCents(selOut)}</span> spent{selIn ? <> · <span className="amount in">{formatCents(selIn)}</span> in</> : null} · {selRows.length} txns
-            </span>
+      <DayPanel day={sel} rows={selRows} selOut={selOut} selIn={selIn} onClose={() => setSel(null)}
+        onStep={(dir) => { const days = [...byDay.keys()].sort(); const i = sel ? days.indexOf(sel) : -1; const next = days[i + dir]; if (next) { setSel(next); setYearPick(next.slice(0, 4)); } }} />
+    </section>
+  );
+}
+
+// The chosen day's payments, in a panel that slides in from the right (a bottom sheet on phones). A native <dialog>
+// gives focus trapping, Escape to close and a backdrop for free.
+function DayPanel({ day, rows, selOut, selIn, onClose, onStep }: {
+  day: string | null; rows: Row[]; selOut: number; selIn: number; onClose: () => void; onStep: (dir: -1 | 1) => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current; if (!d) return;
+    if (day && !d.open) d.showModal();
+    if (!day && d.open) d.close();
+  }, [day]);
+  const title = day ? new Date(`${day}T00:00:00Z`).toLocaleDateString("en-SG", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
+  const net = selIn - selOut;
+  return (
+    <dialog ref={ref} className="day-panel" aria-labelledby="day-panel-title" onClose={onClose}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onKeyDown={(e) => { if (e.key === "ArrowLeft") onStep(-1); if (e.key === "ArrowRight") onStep(1); }}>
+      {day && (
+        <div className="day-panel-body">
+          <div className="day-panel-head">
+            <h3 id="day-panel-title">{title}</h3>
+            <button type="button" className="day-panel-x" onClick={onClose} aria-label="Close">Close</button>
           </div>
-          {selRows.length === 0 ? (
-            <p className="dc-empty">No transactions this day.</p>
-          ) : (
-            <ul className="dc-list cal-day-list">
-              {selRows.map((r) => (
-                <li key={r.id} className="dc-row">
+          <div className="day-panel-totals">
+            <div><span>Money out</span><strong className="amount out">{formatCents(selOut)}</strong></div>
+            <div><span>Money in</span><strong className="amount in">{formatCents(selIn)}</strong></div>
+            <div><span>Net</span><strong className={`amount ${net < 0 ? "out" : "in"}`}>{net < 0 ? "-" : ""}{formatCents(Math.abs(net))}</strong></div>
+          </div>
+          {rows.length === 0 ? <p className="dc-empty">No transactions this day.</p> : (
+            <ul className="day-panel-list">
+              {rows.map((r) => (
+                <li key={r.id}>
                   <span className="dc-main">
                     <span className="dc-name">{r.merchant}</span>
-                    <span className="dc-meta">
-                      <span className="cat-dot" style={{ background: categoryColor(r.category), marginRight: 6 }} aria-hidden="true" />
-                      {r.category}
-                    </span>
+                    <span className="dc-meta"><span className="cat-dot" style={{ background: categoryColor(r.category), marginRight: 6 }} aria-hidden="true" />{r.category}</span>
                   </span>
-                  <span className={`amount dc-amt${r.amountCents > 0 ? " in" : ""}`}>{r.amountCents > 0 ? "+" : ""}{formatCents(Math.abs(r.amountCents))}</span>
+                  <span className={`amount ${r.amountCents > 0 ? "in" : "out"}`}>{r.amountCents > 0 ? "+" : "-"}{formatCents(Math.abs(r.amountCents))}</span>
                 </li>
               ))}
             </ul>
           )}
-        </>
+          <div className="day-panel-foot">
+            <button type="button" className="btn ghost" onClick={() => onStep(-1)}>Previous day</button>
+            <button type="button" className="btn ghost" onClick={() => onStep(1)}>Next day</button>
+            <Link className="btn" href={`/dashboard/statements?from=${day}&to=${day}&adv=1`}>Open in statements</Link>
+          </div>
+        </div>
       )}
-    </section>
+    </dialog>
   );
 }

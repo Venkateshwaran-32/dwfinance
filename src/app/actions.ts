@@ -88,7 +88,7 @@ export async function recategorizeAction(): Promise<void> {
   for (const t of txns) {
     if (t.source === "user") continue; // never override a manual confirm
     const saved = ruleMap.get(normalizeKey(t.description, t.counterparty));
-    const next = saved ?? ruleCategorize(t.description, t.counterparty)?.category;
+    const next = saved ?? ruleCategorize(t.description, t.counterparty, t.amountCents)?.category;
     if (next && (next !== t.category || t.needsReview)) {
       await db.transaction.update({
         where: { id: t.id },

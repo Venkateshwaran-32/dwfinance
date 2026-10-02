@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isPayNowToPerson, cleanMerchant } from "@/server/merchants";
+import { isTransferToPerson, cleanMerchant, normalizeKey } from "@/server/merchants";
+import { buildSpendTrend } from "@/lib/spend-trend";
 import { DashboardCharts } from "@/components/dashboard-charts";
 import { CalendarHeatmap } from "@/components/calendar-heatmap";
 import { RecurringPanel } from "@/components/recurring-panel";
@@ -17,20 +18,12 @@ import { PeerLedgerCard } from "@/components/peer-ledger-card";
 import { computeHealth } from "@/server/financial-health";
 import { FinancialHealthCard } from "@/components/financial-health-card";
 import { buildMoneyFlow } from "@/lib/cashflow";
+import { computeRecurring } from "@/lib/recurring";
 import { MoneyFlowChart } from "@/components/money-flow";
 import { DashboardHeader } from "@/components/dashboard-header";
 import "@/styles/dashboard-header.css";
 
 export const dynamic = "force-dynamic";
-
-function cadenceLabel(dates: Date[]): string {
-  if (dates.length < 2) return "one-off";
-  const s = [...dates].sort((a, b) => a.getTime() - b.getTime());
-  let gap = 0;
-  for (let i = 1; i < s.length; i++) gap += (s[i].getTime() - s[i - 1].getTime()) / 86400000;
-  gap /= s.length - 1;
-  if (gap <= 2) return "daily"; if (gap <= 10) return "weekly"; if (gap <= 45) return "monthly"; return `~${Math.round(gap)}d`;
-}
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ months?: string; from?: string; to?: string }> }) {
   const userId = await getSessionUserId();
@@ -77,7 +70,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const byCat = new Map<string, number>(), byDay = new Map<string, number>(), byMonth = new Map<string, number>();
   const catMerch = new Map<string, Map<string, { cents: number; count: number }>>();
-  const occ = new Map<string, { count: number; total: number; dates: Date[]; category: string; instances: { date: string; cents: number }[] }>();
   let spend = 0, income = 0, paynowTotal = 0;
   for (const t of txns) {
     const name = cleanMerchant(t.description, t.counterparty) || t.counterparty || t.description;
@@ -88,9 +80,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       const mon = day.slice(0, 7); byMonth.set(mon, (byMonth.get(mon) ?? 0) + v);
       let cm = catMerch.get(t.category); if (!cm) { cm = new Map(); catMerch.set(t.category, cm); }
       const ce = cm.get(name) ?? { cents: 0, count: 0 }; ce.cents += v; ce.count++; cm.set(name, ce);
-      const e = occ.get(name) ?? { count: 0, total: 0, dates: [], category: t.category, instances: [] };
-      e.count++; e.total += v; e.dates.push(t.date); e.instances.push({ date: day, cents: v }); occ.set(name, e);
-      if (isPayNowToPerson(t.description, t.counterparty)) paynowTotal += v;
+      if (isTransferToPerson(t.description, t.counterparty)) paynowTotal += v;
     } else income += t.amountCents;
   }
   const categories = [...byCat.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
@@ -121,13 +111,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   };
 
   const monthlyTrend = byDay.size > 92; // long window -> aggregate to months so it stays readable
+  // Monthly spend: everyday vs large one-offs, against the usual month (built from ALL data, so the first months
+  // of a chosen period still have their 12 months of history), then cut to the chosen period.
+  const spendTrend = monthlyTrend
+    ? buildSpendTrend(allTxns.map((t) => ({ date: t.date, amountCents: t.amountCents, payeeKey: normalizeKey(t.description, t.counterparty), label: cleanMerchant(t.description, t.counterparty) })), monthsPresent)
+        .filter((m) => m.ym >= from && m.ym <= to)
+    : null;
   const trend = monthlyTrend
     ? [...byMonth.entries()].sort().map(([m, cents]) => ({ day: `${MON[Number(m.slice(5, 7)) - 1]} ${m.slice(2, 4)}`, cents }))
     : [...byDay.entries()].sort().map(([day, cents]) => ({ day: day.slice(5), cents }));
   const trendLabel = monthlyTrend ? "Monthly spend" : "Daily spend";
   const breakdown: Record<string, { name: string; cents: number; count: number }[]> = {};
   for (const [cat, m] of catMerch) breakdown[cat] = [...m.entries()].map(([name, e]) => ({ name, cents: e.cents, count: e.count })).sort((a, b) => b.cents - a.cents).slice(0, 12);
-  const recurring = [...occ.entries()].filter(([, e]) => e.count >= 3).map(([name, e]) => ({ name, count: e.count, avg: Math.round(e.total / e.count), total: e.total, cadence: cadenceLabel(e.dates), category: e.category, instances: [...e.instances].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12) })).sort((a, b) => b.total - a.total).slice(0, 10);
+  const recurring = computeRecurring(txns.map((t) => ({ date: t.date, amountCents: t.amountCents, category: t.category, name: cleanMerchant(t.description, t.counterparty) || t.counterparty || t.description })));
   const needsReview = txns.filter((t) => t.needsReview).length;
   const rows = txns.map((t) => ({ id: t.id, date: t.date.toISOString(), description: t.description, counterparty: t.counterparty, merchant: cleanMerchant(t.description, t.counterparty), category: t.category, amountCents: t.amountCents, needsReview: t.needsReview }));
 
@@ -136,7 +132,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const alerts = computeAlerts(txns);
   const subscriptions = computeSubscriptions(txns);
   const peers = computePeers(txns);
-  const health = computeHealth(txns);
+  const health = computeHealth(txns, { allTxns, from, to });
   const flow = buildMoneyFlow(txns);
   const monthsCount = new Set(txns.map((t) => t.date.toISOString().slice(0, 7))).size || 1;
   const incomeMonthlyCents = Math.round(income / monthsCount);
@@ -150,14 +146,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <InsightRail insights={insights} />
 
-      <DashboardCharts categories={categories} trend={trend} breakdown={breakdown} trendLabel={trendLabel} monthly={monthly} compare={compare} />
+      <DashboardCharts categories={categories} trend={trend} breakdown={breakdown} trendLabel={trendLabel} monthly={monthly} compare={compare} spendTrend={spendTrend} />
 
       <MoneyFlowChart flow={flow} />
 
       <div className="dash-row">
         <AlertsPanel alerts={alerts} />
         <SubscriptionCard summary={subscriptions} incomeMonthlyCents={incomeMonthlyCents} />
-        <FinancialHealthCard health={health} />
+        <FinancialHealthCard health={health} periodLabel={rangeLabel} />
       </div>
 
       <CalendarHeatmap rows={rows} />

@@ -3,7 +3,8 @@
 import '@/styles/dashboard-cards.css';
 import type { HealthSummary } from '@/server/financial-health';
 
-export function FinancialHealthCard({ health }: { health: HealthSummary }) {
+// Scores the period picked on the dashboard; `periodLabel` names it (e.g. "All time · Jan 2067–Dec 2070").
+export function FinancialHealthCard({ health, periodLabel }: { health: HealthSummary; periodLabel: string }) {
   // Red only when the score genuinely needs attention.
   const scoreClass = health.score >= 65 ? 'fh-pos' : health.score >= 50 ? '' : 'fh-neg';
   const delta = health.prevSavingsRatePct === null ? null : health.savingsRatePct - health.prevSavingsRatePct;
@@ -11,7 +12,7 @@ export function FinancialHealthCard({ health }: { health: HealthSummary }) {
   return (
     <section className="card card-pad">
       <h2 className="card-title">Financial health</h2>
-      <p className="card-sub">This month</p>
+      <p className="card-sub">{periodLabel}</p>
 
       <div className="fh-top">
         <div className={`num-hero fh-score ${scoreClass}`}>
@@ -21,14 +22,14 @@ export function FinancialHealthCard({ health }: { health: HealthSummary }) {
         <div className="dc-main">
           <span className="fh-grade">{health.grade}</span>
           <span className="dc-meta">
-            Savings rate <span className="amount">{formatPct(health.savingsRatePct)}</span>
+            {health.months > 1 ? 'Overall savings rate' : 'Savings rate'} <span className="amount">{formatPct(health.savingsRatePct)}</span>
             {delta !== null ? (
               <>
                 {' ('}
                 <span className={`amount ${delta >= 0 ? 'fh-pos' : 'fh-neg'}`}>
                   {delta >= 0 ? 'up' : 'down'} {Math.abs(delta)}pp
                 </span>
-                {' vs last month)'}
+                {` vs ${health.prevLabel ?? 'the period before'})`}
               </>
             ) : null}
           </span>

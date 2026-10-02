@@ -66,7 +66,7 @@ export type Sort = (typeof SORTS)[number][0];
 export type Group = (typeof GROUPS)[number][0];
 
 export type SearchParams = Partial<Record<
-  "q" | "not" | "category" | "cats" | "from" | "to" | "month" | "dir" | "min" | "max" | "review" | "type" | "sort" | "group" | "all" | "adv",
+  "q" | "not" | "category" | "cats" | "from" | "to" | "month" | "dir" | "min" | "max" | "review" | "type" | "sort" | "group" | "all" | "adv" | "oneoff",
   string
 >>;
 
@@ -75,7 +75,7 @@ export type Search = {
   categories: string[]; types: PayType[];
   month: string; fromIso: string; toIso: string; from: Date | null; to: Date | null;
   dir: "" | "out" | "in"; minCents: number | null; maxCents: number | null; minField: string; maxField: string;
-  review: boolean; sort: Sort; group: Group; showAll: boolean;
+  review: boolean; oneOff: boolean; sort: Sort; group: Group; showAll: boolean;
   active: boolean; // any filter set (sort / group / showAll do not count)
 };
 
@@ -112,15 +112,17 @@ export function buildSearch(sp: SearchParams): Search {
   return {
     q, not, include, exclude, categories, types, month, fromIso, toIso, from, to, dir, minCents, maxCents,
     minField: fMin === null ? "" : String(fMin / 100), maxField: fMax === null ? "" : String(fMax / 100),
-    review, sort, group, showAll: sp.all === "1",
-    active: Boolean(include.length || exclude.length || categories.length || types.length || from || to || dir || minCents !== null || maxCents !== null || review),
+    review, oneOff: sp.oneoff === "1", sort, group, showAll: sp.all === "1",
+    active: Boolean(include.length || exclude.length || categories.length || types.length || from || to || dir || minCents !== null || maxCents !== null || review || sp.oneoff === "1"),
   };
 }
 
 export type TxnLike = { date: Date; description: string; counterparty: string | null; amountCents: number; category: string; needsReview: boolean };
+// isOneOff: supplied by the caller (it needs every transaction to know which payees are regular).
 
-export function matches(s: Search, t: TxnLike): boolean {
+export function matches(s: Search, t: TxnLike, isOneOff?: (t: TxnLike) => boolean): boolean {
   if (!s.active) return false;
+  if (s.oneOff && !isOneOff?.(t)) return false;
   const abs = Math.abs(t.amountCents);
   if (s.categories.length && !s.categories.includes(t.category)) return false;
   if (s.from && t.date < s.from) return false;
