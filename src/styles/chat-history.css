@@ -1,0 +1,43 @@
+/* Ask AI: chat history list (see ../../VISUAL_SYSTEM.md). Desktop: a column beside the chat. Phone: folds behind "Chats". */
+.chat-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+.chat-hist { padding: 14px; display: grid; gap: 10px; min-width: 0; max-height: min(78vh, 760px); grid-template-rows: auto minmax(0, 1fr); }
+.chat-hist-top { display: flex; gap: 8px; }
+.chat-hist-new { flex: 1; font-size: 14px; padding: 0.55rem 1rem; }
+.chat-hist-toggle { display: none; font-size: 14px; padding: 0.55rem 1rem; }
+.chat-hist-body { display: grid; gap: 10px; min-height: 0; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.chat-hist-search { font-size: 14px; padding: 0.5rem 0.7rem; }
+.chat-hist-topics { display: flex; flex-wrap: wrap; gap: 4px; }
+.chat-hist-topic { border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.chat-hist-topic[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.chat-hist-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: grid; gap: 2px; align-content: start; }
+.chat-hist-item { border-radius: 12px; padding: 2px; }
+.chat-hist-item.current { background: var(--surface-2); }
+.chat-hist-open { display: grid; gap: 3px; width: 100%; text-align: left; border: none; background: transparent; padding: 8px 10px; border-radius: 10px; font: inherit; cursor: pointer; color: var(--text); }
+.chat-hist-open:hover { background: var(--surface-2); }
+.chat-hist-title { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-hist-pin { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin-right: 6px; }
+.chat-hist-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); }
+.chat-hist-tag { border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; font-size: 11px; background: var(--surface); }
+.chat-hist-acts { display: none; gap: 10px; padding: 0 10px 8px; }
+.chat-hist-item.current .chat-hist-acts, .chat-hist-item:hover .chat-hist-acts, .chat-hist-item:focus-within .chat-hist-acts { display: flex; }
+.chat-hist-act { border: none; background: none; padding: 2px 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--text-dim); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.chat-hist-act:hover { color: var(--text); }
+.chat-hist-act.danger { color: var(--danger); }
+.chat-hist-rename { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 8px; }
+.chat-hist-rename .input { flex: 1 1 100%; font-size: 14px; padding: 0.4rem 0.6rem; }
+.chat-hist-confirm { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 8px 10px; font-size: 13px; }
+.chat-hist-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 8px; }
+.chat-hist-foot .chat-hist-confirm { padding: 0; }
+.chat-hist-empty { margin: 0; font-size: 13px; color: var(--text-dim); padding: 6px 2px; }
+.chat-hist button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .chat-layout { grid-template-columns: minmax(0, 1fr); }
+  .chat-hist { max-height: none; }
+  .chat-hist-toggle { display: inline-block; flex: 1; }
+  .chat-hist-body { display: none; }
+  .chat-hist.open .chat-hist-body { display: grid; }
+  .chat-hist-list { max-height: 46vh; }
+  .chat-hist-acts { display: flex; } /* no hover on touch: keep the actions visible */
+  .chat-hist-act { padding: 6px 0; }
+}
+.chat-hist-confirm-text { flex: 1 1 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

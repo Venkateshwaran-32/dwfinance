@@ -1,0 +1,16 @@
+dwfinance: how to start
+
+1. Install Node.js if you do not have it (free): https://nodejs.org  (pick the LTS download)
+2. Double-click the start file for your computer:
+     Mac:      Start dwfinance (Mac).command
+     Windows:  Start dwfinance (Windows).bat
+3. Wait. The first start downloads what the app needs (a few minutes, once).
+   Your browser then opens the app. Press "Fast access" to see the sample data.
+
+Keep the black window open while you use the app. Close it to stop.
+
+If your computer blocks the file because it was downloaded:
+  Mac:      System Settings > Privacy & Security > scroll down > "Open Anyway"
+  Windows:  click "More info" > "Run anyway"
+
+Ask AI is optional and needs LM Studio. See README.md, section "Turn on Ask AI".

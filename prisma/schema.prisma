@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Local desktop project (decided 2026-06-21): SQLite, no cloud deploy. Postgres swap is parked
+// in DEPLOY.md for if/when this ever ships publicly.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  statements   Statement[]
+  transactions Transaction[]
+  rules        MerchantRule[]
+  uploadJobs   UploadJob[]
+}
+
+model UploadJob {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String    @default("processing") // processing | done | error
+  fileName    String
+  error       String?
+  count       Int?
+  startedAt   DateTime  @default(now())
+  heartbeatAt DateTime? // bumped each chunk; status route fails a job that's gone silent (crash/restart)
+  finishedAt  DateTime?
+
+  @@index([userId])
+}
+
+model Statement {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  period       String
+  fileHash     String?       // sha256 of the uploaded PDF, to detect re-uploads of the same file
+  uploadedAt   DateTime      @default(now())
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([userId, fileHash])
+}
+
+model Transaction {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statementId  String
+  statement    Statement  @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  date         DateTime
+  description  String
+  counterparty String?
+  amountCents  Int        // signed: negative = spend, positive = income
+  category     String     @default("Uncategorized")
+  subcategory  String?
+  confidence   Float?
+  needsReview  Boolean    @default(false)
+  source       String     @default("rule") // rule | ai | fallback | user
+
+  @@index([userId])
+  @@index([statementId])
+}
+
+model MerchantRule {
+  id           String  @id @default(cuid())
+  userId       String
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchKey     String  // normalized counterparty/description key
+  category     String
+  subcategory  String?
+
+  @@unique([userId, matchKey])
+  @@index([userId])
+}

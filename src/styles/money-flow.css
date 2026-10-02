@@ -1,0 +1,30 @@
+/* Money flow card: Sankey on wide screens, ranked bar lists on phones. Tokens from globals.css. */
+.mf-desktop { margin-top: 14px; min-width: 0; }
+.mf-sankey { width: 100%; min-width: 0; }
+.mf-sankey svg { overflow: visible; }
+.mf-sankey svg:focus, .mf-sankey svg *:focus { outline: none; }
+.mf-node { cursor: default; }
+.mf-node:focus-visible rect { stroke: var(--accent); stroke-width: 2px; }
+.mf-link { transition: stroke-opacity 0.15s ease; }
+.mf-label-name { font-size: 12px; font-weight: 600; fill: var(--text); }
+.mf-label-amt { font-size: 11px; fill: var(--text); font-variant-numeric: tabular-nums; }
+.mf-label-pct { fill: var(--text-dim); }
+
+.mf-phone { display: none; margin-top: 14px; gap: 18px; }
+.mf-bars-title { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.mf-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.mf-bar-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; }
+.mf-bar-name { font-weight: 600; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-bar-amt { font-size: 14px; font-weight: 600; text-align: right; }
+.mf-bar-pct { margin-left: 8px; color: var(--text-dim); font-weight: 400; font-size: 12px; }
+.mf-bar-track { grid-column: 1 / -1; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.mf-bar-track > i { display: block; height: 100%; min-width: 2px; border-radius: 999px; }
+
+.mf-note { margin: 14px 0 0; font-size: 13px; color: var(--text-dim); }
+.mf-note b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 639.98px) {
+  .mf-desktop { display: none; }
+  .mf-phone { display: grid; }
+}
+@media (prefers-reduced-motion: reduce) { .mf-link { transition: none; } }

@@ -1,0 +1,76 @@
+/* Dashboard red header block, insights list, dashboard empty states (see ../../VISUAL_SYSTEM.md). */
+.dash-header {
+  position: relative; overflow: hidden; min-width: 0;
+  background: var(--accent); color: var(--accent-ink);
+  border-radius: var(--radius-card); padding: 28px 32px;
+  display: grid; gap: 22px;
+}
+.dash-header-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; position: relative; z-index: 1; }
+.dash-header-meta { font-size: 13px; color: rgba(255, 255, 255, 0.8); }
+.dash-header-figures { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; position: relative; z-index: 1; }
+.dash-header-figure { min-width: 0; }
+.dash-header-figure dt { font-size: 13px; color: rgba(255, 255, 255, 0.8); margin-bottom: 6px; }
+.dash-header-figure dd { margin: 0; font-size: clamp(1.7rem, 2.75vw, 2.2rem); color: var(--accent-ink); white-space: nowrap; overflow-wrap: normal; }
+.dash-header-foot { margin: 0; font-size: 14px; color: rgba(255, 255, 255, 0.85); position: relative; z-index: 1; }
+.dash-header-link { color: var(--accent-ink); font-weight: 600; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.dash-header a:focus-visible, .dash-header input:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* Period picker on the red block: white-outline pills + two month selects. */
+.dash-header-top { display: grid; gap: 10px; justify-content: stretch; }
+.period { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.period-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.period-pill { border: 1px solid rgba(255, 255, 255, 0.45); background: transparent; color: var(--accent-ink); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.period-pill:hover { background: rgba(255, 255, 255, 0.14); }
+.period-pill[aria-pressed="true"] { background: var(--accent-ink); color: var(--accent); border-color: var(--accent-ink); font-weight: 700; }
+.period-range { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255, 255, 255, 0.85); }
+.period-range select { font: inherit; font-size: 13px; color: var(--accent-ink); background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.period-range select option { color: var(--text); background: var(--surface); }
+.dash-header button:focus-visible, .dash-header select:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* Decorative art: desktop only, right gutter reserved so it never sits over the numbers. */
+.dash-header-art { position: absolute; right: 20px; top: 50%; width: 190px; height: 190px; transform: translateY(-42%); pointer-events: none; }
+.dash-header-art img { position: absolute; display: block; }
+.art-stash { right: 6px; bottom: 0; width: 160px; height: auto; animation: dash-float 7s ease-in-out infinite; }
+.art-coin-a { left: 0; top: 8px; width: 46px; height: auto; animation: dash-float 6s ease-in-out -2s infinite; }
+.art-coin-b { right: 0; top: 0; width: 34px; height: auto; animation: dash-float 8s ease-in-out -4.5s infinite; }
+@keyframes dash-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-10px) rotate(3deg); }
+}
+@media (min-width: 900px) { .dash-header { padding-right: 230px; } }
+@media (max-width: 899px) { .dash-header-art { display: none; } }
+/* Three across needs ~230px per figure; below that they stack so no amount is ever clipped. */
+@media (max-width: 760px) { .dash-header-figures { grid-template-columns: minmax(0, 1fr); gap: 14px; } .dash-header-figure dd { font-size: 2rem; } }
+@media (max-width: 640px) { .dash-header { padding: 20px; gap: 18px; } }
+@media (prefers-reduced-motion: reduce) { .dash-header-art img { animation: none; } }
+
+/* Insights ticker: label on the left, a slow right-to-left tape on the right (see insight-rail.tsx). */
+.ticker { display: flex; align-items: center; gap: 14px; padding: 12px 18px; overflow: hidden; min-width: 0; }
+.ticker-label { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); flex: 0 0 auto; padding-right: 14px; border-right: 1px solid var(--border); }
+.ticker-view { flex: 1 1 auto; min-width: 0; overflow: hidden; mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent); border-radius: 8px; }
+.ticker-view:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ticker-track { display: flex; width: max-content; animation: ticker-slide linear infinite; }
+.ticker-view:hover .ticker-track, .ticker-view:focus .ticker-track { animation-play-state: paused; }
+.ticker-row { display: flex; list-style: none; margin: 0; padding: 0; }
+.ticker-item { display: inline-flex; align-items: center; gap: 8px; padding: 4px 28px 4px 0; font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; }
+.ticker-mark { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+.ticker-mark.new { background: var(--ink); }
+/* spending up = red triangle up, spending down = green triangle down (drawn with borders, no glyphs) */
+.ticker-mark.up, .ticker-mark.down { width: 0; height: 0; border-radius: 0; background: none; border-left: 5px solid transparent; border-right: 5px solid transparent; }
+.ticker-mark.up { border-bottom: 8px solid var(--accent); }
+.ticker-mark.down { border-top: 8px solid var(--pos); }
+@keyframes ticker-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .ticker { align-items: flex-start; }
+  .ticker-view { mask-image: none; }
+  .ticker-track { animation: none; width: auto; }
+  .ticker-row { flex-wrap: wrap; }
+  .ticker-row[aria-hidden="true"] { display: none; }
+  .ticker-item { white-space: normal; }
+}
+
+/* Dashboard empty states. */
+.dash-empty { display: grid; gap: 16px; justify-items: center; text-align: center; }
+.dash-empty h1 { margin: 0; }
+.dash-empty p { margin: 0; max-width: 440px; color: var(--text-dim); }
+.dash-links { display: flex; justify-content: center; }

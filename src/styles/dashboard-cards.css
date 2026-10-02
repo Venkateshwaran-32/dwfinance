@@ -1,0 +1,164 @@
+/* Dashboard cards: "Where it went", monthly chart and the six list cards. Tokens from globals.css. */
+.dc-dim { color: var(--text-dim); font-size: 12px; font-weight: 400; }
+.dc-empty { margin: 12px 0 0; color: var(--text-dim); font-size: 14px; }
+.dc-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dc-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.dc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+.dc-list > .dc-row:first-child { border-top: none; }
+.dc-main { min-width: 0; display: grid; gap: 2px; }
+.dc-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dc-meta { color: var(--text-dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dc-amt { font-weight: 600; font-size: 14px; text-align: right; }
+.cat-dot { display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; }
+.attn-dot { display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--accent); }
+.attn-dot.quiet { background: var(--text-dim); }
+.alert-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+.alert-row .attn-dot { align-self: start; margin-top: 6px; }
+.dc-kind { color: var(--text-dim); font-size: 12px; font-weight: 500; }
+.dc-flag { display: inline-block; margin-top: 4px; color: var(--accent); font-size: 12px; font-weight: 600; }
+.dc-hero { margin: 12px 0 4px; font-size: 32px; }
+.dc-hero small { font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 500; color: var(--text-dim); letter-spacing: 0; margin-left: 2px; }
+
+/* Where it went */
+.where-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); margin-top: 14px; }
+.where-grid > * { min-width: 0; }
+@media (min-width: 900px) {
+  .where-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .where-tree { order: -1; }
+}
+.where-tree { height: 300px; }
+.where-tree svg:focus, .where-tree svg *:focus { outline: none; }
+.tm-label { font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif; pointer-events: none; }
+.tm-amount { font-variant-numeric: tabular-nums; }
+.where-bars { display: grid; gap: 2px; align-content: start; }
+.rank-row {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto 3.2em; gap: 4px 10px; align-items: center;
+  padding: 8px 10px; border: none; border-radius: 12px; background: transparent; color: var(--text);
+  font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.rank-row:hover { background: var(--surface-2); }
+.rank-row.on { background: var(--surface-2); }
+.rank-row:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.rank-name { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 500; }
+.rank-row.on .rank-name { font-weight: 600; }
+.rank-amt { text-align: right; }
+.rank-pct { text-align: right; color: var(--text-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+.rank-track { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.rank-row.on .rank-track, .rank-row:hover .rank-track { background: var(--surface); }
+.rank-fill { display: block; height: 100%; border-radius: 999px; }
+.payees { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.payees-title { margin: 0; font-size: 14px; font-weight: 600; }
+.payees .dc-list { gap: 6px; }
+.payee-row { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; overflow: hidden; font-size: 14px; }
+.payee-bar { position: absolute; inset: 0 auto 0 0; opacity: 0.28; border-radius: 10px; }
+.payee-row > :not(.payee-bar) { position: relative; }
+.payee-name { flex: 1 1 auto; }
+
+/* Monthly spend */
+.trend-chart { height: 240px; margin-top: 12px; }
+
+/* Recurring panel */
+.rec-item { border-top: 1px solid var(--border); }
+.dc-list > .rec-item:first-child { border-top: none; }
+.rec-toggle {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  padding: 10px 0; background: none; border: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.rec-toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
+.rec-chev { display: inline-block; width: 7px; height: 7px; border-right: 2px solid var(--text-dim); border-bottom: 2px solid var(--text-dim); transform: rotate(-45deg); margin-right: 8px; transition: transform 0.15s; flex: 0 0 auto; }
+.rec-toggle[aria-expanded="true"] .rec-chev { transform: rotate(45deg); }
+.rec-title { display: flex; align-items: center; min-width: 0; }
+.rec-detail { padding: 0 0 12px 15px; display: grid; gap: 4px; }
+.rec-inst { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+
+/* Financial health */
+.fh-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; margin-top: 12px; }
+.fh-score { font-size: 48px; }
+.fh-score small { font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif; font-size: 18px; font-weight: 500; color: var(--text-dim); letter-spacing: 0; }
+.fh-grade { font-size: 18px; font-weight: 600; }
+.fh-pos { color: var(--pos); }
+.fh-neg { color: var(--accent); }
+
+/* Calendar heatmap */
+.cal-scroll { margin-top: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+/* no inner vertical scroll: a year of months fits; a scrolling box inside a card hid the last row */
+.cal-months { display: flex; gap: 22px; flex-wrap: wrap; }
+@media (max-width: 640px) { .cal-months { flex-wrap: nowrap; width: max-content; } .cal-scroll.tall { max-height: none; overflow-y: visible; } }
+.cal-month-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; width: 200px; font-size: 13px; }
+.cal-month-head .amount { font-size: 12px; color: var(--text-dim); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 26px); gap: 3px; }
+.cal-wd { font-size: 10px; color: var(--text-dim); text-align: center; }
+.cal-cell {
+  width: 26px; height: 26px; border-radius: 6px; font-size: 11px; line-height: 24px; text-align: center; padding: 0;
+  font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+}
+.cal-cell.sel { border: 2px solid var(--ink); line-height: 22px; }
+/* Day colours (2026-10-02): red scale for spending ranked against the user's own days, green when more came
+   in than went out, plain dashed box when nothing happened. */
+.cal-none { background: var(--surface); border: 1px dashed var(--border); color: var(--text-dim); }
+.cal-out-1 { background: #fde3e0; }
+.cal-out-2 { background: #f8b0aa; }
+.cal-out-3 { background: #e2473f; color: #fff; }
+.cal-out-4 { background: #8f0d12; color: #fff; font-weight: 700; }
+.cal-in { background: var(--pos); color: #fff; font-weight: 700; }
+.cal-legend { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--text-dim); }
+.cal-legend li { display: inline-flex; align-items: center; gap: 4px; }
+.cal-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; }
+.cal-legend li > .cal-swatch:last-of-type { margin-right: 4px; }
+.cal-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.cal-day-list { max-height: 220px; overflow-y: auto; }
+.cal-day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) { .rec-chev { transition: none; } }
+.cal-out-1, .cal-out-2, .cal-out-3, .cal-out-4, .cal-in { border-color: transparent; }
+.cal-cell.sel { border: 2px solid var(--ink); }
+
+.cal-years { display: inline-flex; gap: 2px; margin-top: 10px; padding: 2px; border: 1px solid var(--border); border-radius: 999px; }
+.cal-year { border: none; background: transparent; padding: 5px 14px; border-radius: 999px; font: inherit; font-size: 13px; color: var(--text-dim); cursor: pointer; }
+.cal-year[aria-pressed="true"] { background: var(--ink); color: #fff; font-weight: 600; }
+.cal-year:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* "Where it went" view switcher + the three extra views */
+.where-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.view-tabs { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 999px; max-width: 100%; overflow-x: auto; }
+.view-tab { border: none; background: transparent; padding: 5px 14px; border-radius: 999px; font: inherit; font-size: 13px; color: var(--text-dim); cursor: pointer; white-space: nowrap; }
+.view-tab[aria-selected="true"] { background: var(--ink); color: #fff; font-weight: 600; }
+.view-tab:focus-visible, .view-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.view-body { margin-top: 14px; display: grid; gap: 12px; min-width: 0; }
+.view-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.view-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.view-chip[aria-pressed="true"] { background: var(--surface-2); color: var(--text); font-weight: 600; border-color: var(--ink); }
+.time-chart { height: 320px; }
+.time-chart svg:focus, .time-chart svg *:focus { outline: none; }
+.cmp-head { margin: 0; font-size: 14px; color: var(--text); }
+.cmp-prev-label { color: var(--text-dim); }
+.cmp-list { display: grid; gap: 0; }
+.cmp-row { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) auto; grid-template-areas: "name bars amts" "change bars amts"; gap: 2px 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+.cmp-row:first-child { border-top: none; }
+.cmp-name { grid-area: name; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; min-width: 0; }
+.cmp-change { grid-area: change; font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.cmp-head .cmp-change { font-size: inherit; font-weight: 600; }
+.cmp-change.up { color: var(--danger); } .cmp-change.down { color: var(--pos); }
+.cmp-bars { grid-area: bars; display: grid; gap: 4px; }
+.cmp-bar { display: block; height: 10px; border-radius: 999px; min-width: 2px; }
+.cmp-bar.prev { background: var(--border); height: 8px; }
+.cmp-amts { grid-area: amts; display: grid; text-align: right; font-size: 14px; }
+.cmp-prev { color: var(--text-dim); font-size: 12px; }
+.cmp-key { margin: 0; font-size: 12px; color: var(--text-dim); }
+.pat-scroll { overflow-x: auto; max-width: 100%; padding-bottom: 4px; }
+.pat { border-collapse: separate; border-spacing: 2px; font-size: 12px; }
+.pat th { font-weight: 500; color: var(--text-dim); text-align: center; padding: 0; white-space: nowrap; }
+.pat thead th { vertical-align: bottom; height: 34px; position: relative; }
+.pat thead th em { position: absolute; left: 0; top: 0; font-style: normal; font-weight: 700; color: var(--text); }
+.pat tbody th, .pat-corner { position: sticky; left: 0; background: var(--surface); text-align: left !important; padding-right: 12px !important; z-index: 1; }
+.pat tbody th { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 600; height: 24px; }
+.pat td { padding: 0; }
+.pat .pat-year { padding-left: 8px; }
+.pat-cell { display: block; width: 22px; height: 22px; border-radius: 5px; }
+.pat-cell.empty { background: var(--surface-2); }
+a.pat-cell:hover, a.pat-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+@media (max-width: 640px) {
+  .time-chart { height: 260px; }
+  .cmp-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name amts" "change amts" "bars bars"; }
+  .pat-cell { width: 20px; height: 20px; }
+}
