@@ -23,16 +23,16 @@ if (!existsSync(".env") || !existsSync(join("prisma", "dev.db"))) {
   execSync("node scripts/setup.mjs", { stdio: "inherit", env: { ...process.env, DWF_LAUNCHER: "1" } });
 }
 
-// IPv6 wildcard also covers IPv4, which is how Next itself listens.
+// The app only listens on this computer (127.0.0.1), never the network: Fast access needs no password.
 const isFree = (port) => new Promise((resolve) => {
-  const s = createServer().once("error", () => resolve(false)).once("listening", () => s.close(() => resolve(true))).listen(port, "::");
+  const s = createServer().once("error", () => resolve(false)).once("listening", () => s.close(() => resolve(true))).listen(port, "127.0.0.1");
 });
 let port = 3000;
 while (!(await isFree(port)) && port < 3020) port++;
 const url = `http://localhost:${port}`;
 
 say(`Starting dwfinance at ${url}`);
-const app = spawn(process.execPath, [join("node_modules", "next", "dist", "bin", "next"), "dev", "-p", String(port)], { stdio: "inherit" });
+const app = spawn(process.execPath, [join("node_modules", "next", "dist", "bin", "next"), "dev", "--hostname", "127.0.0.1", "-p", String(port)], { stdio: "inherit" });
 app.on("exit", (code) => process.exit(code ?? 0));
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => app.kill(sig));
 

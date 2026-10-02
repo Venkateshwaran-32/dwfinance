@@ -46,13 +46,30 @@ that instead of trusting the amount column:
 
 This has two useful effects:
 
-| Effect | Why |
-|---|---|
-| The sign is always right | A payment makes the balance go down, a deposit makes it go up. There is no need to guess from which column a number sits in. |
-| The statement checks itself | The last balance the reader arrives at should equal the total printed on the statement. If they match, no line was missed or misread. |
+The sign is therefore always right: a payment makes the balance go down, a deposit makes it go up, and
+there is no need to guess which column a number sat in.
 
-The result of that final check is currently written to the server log only; it is not shown on screen.
-The automated tests assert it for all 48 sample statements.
+### The checks
+
+The reader then checks its own work. A statement that passes every check is saved quietly. One that fails
+any check is still saved, but labelled **Needs checking** on the Statements page with each problem in plain
+English, and its doubtful lines go to the Review list.
+
+| Check | Catches |
+|---|---|
+| Each line's printed amount equals the change in balance | A mistyped number, two lines merged into one, a line missing from the text |
+| Each page's opening balance continues the previous page's closing balance | A missing, repeated or out-of-order page |
+| The last balance equals the statement's stated total | Anything else that went wrong in between |
+| Every date is a real calendar date | 32/01 or 30/02, which would otherwise roll into the next month |
+| Every date falls in the statement month (allowing 10 days of posting delay) | A line from the wrong year or month |
+| The statement has an opening balance | Without one, the first line's direction (in or out) cannot be known |
+
+The reader also handles two things that used to trip it up: an overdrawn (negative) balance, and an amount
+printed with no space before the balance. The closing summary line, which starts with a date like a
+transaction does, is recognised and not saved as a transaction.
+
+These checks are covered by automated tests built from deliberately broken statements
+(`tests/unit/statement-checks.test.ts`), and all 48 sample statements must pass every check.
 
 ### Other banks: the local AI model
 
@@ -60,7 +77,9 @@ The automated tests assert it for all 48 sample statements.
 
 If the built-in reader finds nothing, the text is cut into overlapping chunks and each chunk is given to
 the local model with a strict output format. Duplicates from the overlaps are removed. This path is slow
-(minutes, not seconds), needs LM Studio running, and can make mistakes. Treat its results as a draft.
+(minutes, not seconds), needs LM Studio running, and can make mistakes. There is no running balance to
+check against, so these statements are always labelled **Needs checking**. Lines with an impossible date
+or amount are left out and listed.
 
 ## 4. Each transaction is sorted into a category
 

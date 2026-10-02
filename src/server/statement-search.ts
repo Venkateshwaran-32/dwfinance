@@ -35,7 +35,7 @@ export function parseQuery(raw: string): ParsedQuery {
   const out: ParsedQuery = { include: [], exclude: [], minCents: null, maxCents: null };
   const atLeast = (c: number) => { out.minCents = out.minCents === null ? c : Math.max(out.minCents, c); };
   const atMost = (c: number) => { out.maxCents = out.maxCents === null ? c : Math.min(out.maxCents, c); };
-  for (const m of raw.slice(0, 200).matchAll(/(-?)"([^"]+)"|(\S+)/g)) {
+  for (const m of raw.slice(0, 200).matchAll(/(-?)"([^"]+)(?:"|$)|(\S+)/g)) {
     if (m[2] !== undefined) {
       const phrase = m[2].trim().toLowerCase();
       if (phrase) (m[1] ? out.exclude : out.include).push(phrase);

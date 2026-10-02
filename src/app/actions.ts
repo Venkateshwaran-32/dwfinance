@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -43,6 +44,10 @@ export async function loginAction(_prev: ActionState, form: FormData): Promise<A
 // single owner, so on a dev build we sign into the owner's account directly. Disabled in production.
 export async function fastAccessAction(): Promise<void> {
   if (!fastAccessEnabled) redirect("/login");
+  // No password here, so only ever from this computer. The app also binds to 127.0.0.1; this is the second lock
+  // in case someone starts it with a network-facing --hostname.
+  const host = ((await headers()).get("host") ?? "").replace(/:\d+$/, "").toLowerCase();
+  if (!["localhost", "127.0.0.1", "[::1]"].includes(host)) redirect("/login");
   let user = env.FAST_ACCESS_EMAIL
     ? await db.user.findUnique({ where: { email: env.FAST_ACCESS_EMAIL } })
     : null;

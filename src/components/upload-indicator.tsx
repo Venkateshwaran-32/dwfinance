@@ -4,7 +4,7 @@ import { useUpload } from "./upload-provider";
 
 // Global pill shown in the nav while an upload runs (on any dashboard page) and when it finishes.
 export function UploadIndicator() {
-  const { status, elapsed } = useUpload();
+  const { status, elapsed, warning } = useUpload();
   if (status !== "uploading" && status !== "done") return null;
 
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
@@ -17,8 +17,8 @@ export function UploadIndicator() {
     );
   }
   return (
-    <Link href="/dashboard" className="upload-pill done" aria-live="polite">
-      Statement ready
+    <Link href={warning ? "/dashboard/statements" : "/dashboard"} className={`upload-pill ${warning ? "warn" : "done"}`} aria-live="polite">
+      {warning ? "Saved, needs checking" : "Statement ready"}
     </Link>
   );
 }

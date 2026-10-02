@@ -37,7 +37,7 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
 
   const statements = await db.statement.findMany({
     where: { userId },
-    select: { id: true, uploadedAt: true, transactions: { orderBy: { date: "asc" }, select: { id: true, date: true, description: true, counterparty: true, amountCents: true, category: true, needsReview: true } } },
+    select: { id: true, uploadedAt: true, issues: true, transactions: { orderBy: { date: "asc" }, select: { id: true, date: true, description: true, counterparty: true, amountCents: true, category: true, needsReview: true } } },
   });
 
   const isHit = (t: Row) => matches(s, t);
@@ -180,6 +180,7 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
             <summary>
               <span className="stmt-title">{monthLabel(st.start)}</span>
               <span className="stmt-meta">
+                {st.issues && <span className="stmt-flag">Needs checking</span>}
                 {st.transactions.length} transactions{st.hits ? <> · <strong>{st.hits} matching</strong></> : null}
               </span>
             </summary>
@@ -187,6 +188,12 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
               <span>Uploaded {st.uploadedAt.toISOString().slice(0, 10)} · {st.transactions.length} transactions</span>
               <DeleteStatementButton statementId={st.id} label={monthLabel(st.start)} count={st.transactions.length} />
             </div>
+            {st.issues && (
+              <div className="stmt-issues" role="note">
+                <strong>This statement did not pass every check.</strong> The lines below were saved; doubtful ones are marked for review.
+                <ul>{st.issues.split("\n").map((x) => <li key={x}>{x}</li>)}</ul>
+              </div>
+            )}
             {table(rows, s.showAll)}
           </details>
         );

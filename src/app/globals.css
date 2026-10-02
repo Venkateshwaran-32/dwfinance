@@ -422,3 +422,8 @@ a.stmt-payee:hover, .stmt-cat a:hover { text-decoration: underline; color: var(-
 .chat-setup p, .chat-setup ol { margin: 0; }
 .chat-setup ol { padding-left: 20px; display: grid; gap: 6px; }
 .chat-setup strong { color: var(--text); }
+
+/* statements that failed a check */
+.stmt-flag { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 999px; background: var(--highlight); color: var(--text); font-size: 12px; font-weight: 600; }
+.stmt-issues { margin: 0 16px 12px; padding: 12px 14px; border-radius: 12px; background: var(--highlight); font-size: 13px; color: var(--text); }
+.stmt-issues ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 2px; }

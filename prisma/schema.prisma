@@ -30,6 +30,7 @@ model UploadJob {
   count       Int?
   startedAt   DateTime  @default(now())
   heartbeatAt DateTime? // bumped each chunk; status route fails a job that's gone silent (crash/restart)
+  warning     String?   // set when the statement was saved but did not pass every check
   finishedAt  DateTime?
 
   @@index([userId])
@@ -41,6 +42,7 @@ model Statement {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   period       String
   fileHash     String?       // sha256 of the uploaded PDF, to detect re-uploads of the same file
+  issues       String?       // checks the statement failed, one per line; null = passed every check (or uploaded before checks existed)
   uploadedAt   DateTime      @default(now())
   transactions Transaction[]
 

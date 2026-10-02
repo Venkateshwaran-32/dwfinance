@@ -3,8 +3,9 @@ import { z } from "zod";
 import { log } from "@/lib/logger";
 import { ruleCategorize, isPayNowToPerson, normalizeKey, type Cat } from "./merchants";
 import { ChatError, chatJson as chat, loadedModel } from "./llm";
+import { strictIsoDate } from "./parse-statement";
 
-export type RawTxn = { description: string; counterparty?: string | null; amountCents: number; date: Date };
+export type RawTxn = { description: string; counterparty?: string | null; amountCents: number; date: Date; note?: string }; // note = failed a check
 export type Categorized = RawTxn & {
   category: string; subcategory?: string; confidence: number; needsReview: boolean;
   source: "rule" | "ai" | "fallback" | "user";
@@ -132,7 +133,7 @@ export async function aiExtractStatement(text: string, savedRules: Map<string, C
       const cents = Math.round(r.data.amountSGD * 100);
       const k = `${r.data.date}|${cents}|${(r.data.counterparty || r.data.description).slice(0, 24)}`;
       if (seen.has(k)) continue; seen.add(k);
-      rows.push({ date: new Date(r.data.date), description: r.data.description, counterparty: r.data.counterparty ?? null, amountCents: cents });
+      rows.push({ date: strictIsoDate(r.data.date), description: r.data.description, counterparty: r.data.counterparty ?? null, amountCents: cents });
     }
   }
   log.info("extract done", `${rows.length} rows, ${timeouts} timeouts`);

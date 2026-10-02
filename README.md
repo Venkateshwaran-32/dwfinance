@@ -22,7 +22,7 @@ Reads DBS and POSB statement PDFs and sorts every transaction on your own comput
 
 | Feature | What you get |
 |---|---|
-| Read a statement | Add a PDF. Every transaction is found, and each amount is worked out from the statement's own running balance. |
+| Read a statement | Add a PDF. Every transaction is found, each amount is worked out from the statement's own running balance, and every line is checked. A statement that does not add up is saved with a "Needs checking" label saying exactly what is wrong. |
 | Sort into categories | Known Singapore merchants are sorted by rules. Unclear payees go to a Review list instead of being guessed silently. |
 | Teach it once | Tell it who a PayNow payee is. The answer is saved and applied to every past and future payment to that payee. |
 | Dashboard | Money in, money out, saved; where it went (four views); money flow; calendar; subscriptions; alerts. |
@@ -130,6 +130,7 @@ The app uses whichever model is loaded. Until one is running, the Ask AI page sh
 - The uploaded PDF is read and then discarded. Only the transactions are kept.
 - Ask AI talks to LM Studio on your own computer. No cloud AI service is used.
 - Passwords are stored hashed (bcrypt). Chat history is kept in your browser only.
+- The app only accepts connections from your own computer (`127.0.0.1`), never from other devices on your network.
 
 ## Known limits
 
@@ -137,8 +138,6 @@ The app uses whichever model is loaded. Until one is running, the Ask AI page sh
   and Linux, but neither has been tried yet, including the double-click Windows start file.
 - **Only DBS and POSB statement PDFs are read by the built-in reader.** Other banks' statements are
   handed to the local AI model, which is slow and can make mistakes.
-- **The balance check is not shown on screen yet.** The reader works out whether its final balance equals
-  the statement's stated total, but the result is only written to the server log.
 - **Ask AI was tested with the two models above**, on one Mac. Smaller models answer faster but pick the
   wrong lookup more often.
 - **"Connect DBS" is a placeholder page.** Nothing in this app connects to DBS or to any bank.

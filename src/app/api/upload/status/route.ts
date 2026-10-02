@@ -32,6 +32,7 @@ export async function GET() {
       fileName: job.fileName,
       error: job.error,
       count: job.count,
+      warning: job.warning,
       startedAt: job.startedAt.toISOString(),
       finishedAt: job.finishedAt?.toISOString() ?? null,
     },

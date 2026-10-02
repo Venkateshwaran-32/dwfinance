@@ -22,6 +22,7 @@ beforeAll(async () => {
     const { text } = await extractStatementText(await renderStatementPdf(s));
     const parsed = parseDbsStatement(text);
     expect(parsed.reconciled, `${s.year}-${s.month} reconciles`).toBe(true);
+    expect(parsed.issues, `${s.year}-${s.month} passes every check`).toEqual([]);
     expect(parsed.rows.length).toBe(s.rows.length);
     parsed.rows.forEach((r, i) => {
       expect(r.amountCents).toBe(s.rows[i]!.cents);

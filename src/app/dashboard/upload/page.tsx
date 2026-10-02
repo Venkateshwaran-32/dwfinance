@@ -17,7 +17,7 @@ const STEPS = [
 ];
 
 export default function UploadPage() {
-  const { status, elapsed, error, fileName, start, reset } = useUpload();
+  const { status, elapsed, error, warning, fileName, start, reset } = useUpload();
   const [localErr, setLocalErr] = useState("");
   const [picked, setPicked] = useState<{ name: string; bytes: number } | null>(null);
   const [over, setOver] = useState(false);
@@ -67,9 +67,9 @@ export default function UploadPage() {
         <div className="upload-side">
           {status === "done" ? (
             <div className="card upload-card upload-state" role="status">
-              <span className="upload-pill done">Done</span>
+              <span className={`upload-pill ${warning ? "warn" : "done"}`}>{warning ? "Saved, needs checking" : "Done"}</span>
               <strong className="upload-state-title">Your statement is in</strong>
-              <p>Categorized and ready on your dashboard.</p>
+              {warning ? <p className="upload-warning">{warning}</p> : <p>Every line was checked against the statement&apos;s balance.</p>}
               <div className="upload-actions">
                 <Link href="/dashboard" className="btn">View dashboard</Link>
                 <Link href="/dashboard/statements" className="btn ghost">See the statement</Link>

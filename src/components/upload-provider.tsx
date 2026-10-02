@@ -8,6 +8,7 @@ type UploadCtx = {
   status: Status;
   elapsed: number;
   error: string;
+  warning: string; // saved, but the statement failed a check
   fileName: string;
   start: (form: FormData, fileName: string) => void;
   reset: () => void;
@@ -21,7 +22,7 @@ export function useUpload(): UploadCtx {
   return c;
 }
 
-type JobDTO = { id: string; status: "processing" | "done" | "error"; fileName: string; error: string | null; count: number | null; startedAt: string; finishedAt: string | null };
+type JobDTO = { id: string; status: "processing" | "done" | "error"; fileName: string; error: string | null; count: number | null; warning: string | null; startedAt: string; finishedAt: string | null };
 
 // Owns the upload lifecycle. The job is tracked SERVER-SIDE (UploadJob), so this resumes
 // progress on mount — surviving navigation, full refresh, and logout/login.
@@ -30,6 +31,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>("idle");
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
+  const [warning, setWarning] = useState("");
   const [fileName, setFileName] = useState("");
   const startMs = useRef<number | null>(null);
   const jobId = useRef<string | null>(null);
@@ -54,7 +56,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         const { job } = (await res.json()) as { job: JobDTO | null };
         if (!alive || !job) return;
         if (jobId.current && job.id !== jobId.current) return; // a different (older) job
-        if (job.status === "done") { setStatus("done"); router.refresh(); }
+        if (job.status === "done") { setStatus("done"); setWarning(job.warning ?? ""); router.refresh(); }
         else if (job.status === "error") { setStatus("error"); setError(job.error ?? "Upload failed."); }
       } catch { /* transient */ }
     };
@@ -98,8 +100,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
   function reset() {
     if (status === "uploading") return;
     jobId.current = null; startMs.current = null;
-    setStatus("idle"); setError(""); setElapsed(0); setFileName("");
+    setStatus("idle"); setError(""); setWarning(""); setElapsed(0); setFileName("");
   }
 
-  return <Ctx.Provider value={{ status, elapsed, error, fileName, start, reset }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ status, elapsed, error, warning, fileName, start, reset }}>{children}</Ctx.Provider>;
 }

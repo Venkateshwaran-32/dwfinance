@@ -26,7 +26,8 @@ export async function extractStatementText(buf: Buffer): Promise<{ text: string;
     throw new ParseError("could not read PDF");
   }
   if (text.replace(/\s/g, "").length < 20) throw new ParseError("no extractable text (scanned/encrypted PDF?)");
-  const pm = text.match(/Statement period:\s*([^\n|]+)/i);
+  // unpdf joins pages into one line, so stop at the first column heading and cap the length.
+  const pm = text.match(/Statement period:\s*(.{3,60}?)(?=\s+Date\b|\s*\||\n|$)/i);
   return { text, period: pm ? pm[1].trim() : "Statement" };
 }
 
@@ -38,11 +39,30 @@ export function regexRows(text: string): RawTxn[] {
   for (const m of text.matchAll(re)) {
     const [, date, description, cpRaw, amount] = m;
     rows.push({
-      date: new Date(date),
+      date: strictIsoDate(date),
       description: description.trim(),
       counterparty: cpRaw.trim() === "-" ? null : cpRaw.trim(),
       amountCents: parseAmountToCents(amount),
     });
   }
   return rows;
+}
+
+// Rows from the pipe format or the AI model cannot be balance-checked, so at least refuse impossible values:
+// a date that is not a real calendar day (2067-02-30, 2067-13-45) or an amount that is not a finite number.
+export function keepValidRows<T extends RawTxn>(rows: T[]): { rows: T[]; dropped: number } {
+  const ok = rows.filter((r) => {
+    if (!Number.isFinite(r.amountCents) || !(r.date instanceof Date) || isNaN(r.date.getTime())) return false;
+    const y = r.date.getUTCFullYear();
+    return y >= 1990 && y <= 2100;
+  });
+  return { rows: ok, dropped: rows.length - ok.length };
+}
+
+// "2067-02-30" parses as 2 March in JavaScript. Only accept a YYYY-MM-DD that names a real day.
+export function strictIsoDate(s: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s.trim());
+  if (!m) return new Date(NaN);
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] ? d : new Date(NaN);
 }
