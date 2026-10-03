@@ -53,3 +53,6 @@ prisma/dev.db
 
 # generated on each machine by `npm run setup`
 /public/sample-statements/
+
+# dw agents: stamp of the last passing check
+.dw-check-ok

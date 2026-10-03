@@ -14,9 +14,9 @@ model then puts those figures into a sentence.
 | Lookup | What it returns |
 |---|---|
 | `get_overview` | Date range of the data, number of transactions, total in and out, totals per category |
-| `spend_summary` | Totals grouped by category, payee, month or year, with the grand total |
+| `spend_summary` | Totals grouped by category, payee, month or year, with the grand total; can rank by amount or by how often a payee was paid, and always names the most frequent payee |
 | `find_transactions` | Matching transactions by text, category, date range or minimum amount, with the total of all matches stated first |
-| `get_insights` | Ready-made findings: subscriptions, alerts, financial health, people paid and received, month highlights |
+| `get_insights` | Ready-made findings across all the data: subscriptions, alerts, financial health, people paid and received, month highlights |
 | `propose_payee_category` | Prepares (does not apply) a category change for one payee |
 
 Code: `src/server/chat-tools.ts`, `src/server/llm.ts`

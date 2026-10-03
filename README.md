@@ -70,6 +70,11 @@ recurring charges at their current price and flags price changes.
 
 ### Statements
 
+One row per statement, with a Delete control on each (it asks first, and your saved category rules are
+kept). The line under the heading says how many statements failed a check.
+
+![Statements page, one row per statement](docs/screenshots/statements.png)
+
 Every transaction, with search that understands words, exact phrases, exclusions and amounts
 (`grab >10`, `"ong bee lian"`, `-food`, `10..20`), filters, sorting, grouping and CSV export.
 

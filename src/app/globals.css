@@ -336,11 +336,24 @@ a.stmt-payee:hover, .stmt-cat a:hover { text-decoration: underline; color: var(-
   .stmt-summary > div:nth-child(3) { border-left: none; }
 }
 .stmt-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
-.stmt-del { font-size: 12px; padding: 0.3rem 0.7rem; }
+.stmt-del { font-size: 12px; padding: 0.3rem 0.85rem; }
+/* Statement row plus its delete control: both share grid row 1, the control sits over the summary's right end.
+   While confirming, the question spans the whole row (the card grows if it needs more height). */
+.stmt-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.stmt-item > .stmt { grid-row: 1; grid-column: 1 / -1; }
+.stmt-item > .stmt > summary { padding-right: 96px; }
+.stmt-row-del { grid-row: 1; grid-column: 2; align-self: start; position: relative; z-index: 1; padding: 9px 14px 0 0; }
+.stmt-row-del:has(.stmt-del-confirm) { grid-column: 1 / -1; padding: 6px; }
+.stmt-row-del .stmt-del-confirm { background: color-mix(in srgb, var(--danger) 6%, var(--surface)); border-radius: 18px; }
 .stmt-del-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: 1px solid var(--danger); border-radius: 10px; background: color-mix(in srgb, var(--danger) 6%, transparent); color: var(--text); font-size: 13px; }
 .stmt-del-confirm span { flex: 1 1 260px; }
 .stmt-del-confirm .btn { font-size: 12px; padding: 0.35rem 0.8rem; }
 .stmt-del-yes { background: var(--danger); border-color: var(--danger); color: #fff; }
+@media (max-width: 640px) {
+  .stmt-item > .stmt > summary { padding-top: 16px; padding-bottom: 16px; padding-right: 92px; }
+  .stmt-row-del { padding: 4px 8px 0 0; }
+  .stmt-del, .stmt-del-confirm .btn { min-height: 44px; min-width: 64px; }
+}
 
 /* phone: review cards stack amount/name over category + confirm */
 @media (max-width: 640px) {

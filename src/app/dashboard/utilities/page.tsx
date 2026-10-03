@@ -10,7 +10,7 @@ export default function UtilitiesPage() {
   return (
     <div className="tools">
       <h1>Utilities</h1>
-      <p className="tools-lede">Small calculators that sit next to your spending. They use the numbers you type, not your statements.</p>
+      <p className="tools-lede">Small calculators that use the numbers you type, not your statements.</p>
       <CompoundCalculator title="Compound interest calculator" />
       <section className="card card-pad">
         <h2 className="card-title">Electricity bill estimate</h2>

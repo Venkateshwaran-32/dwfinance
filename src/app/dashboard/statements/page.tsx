@@ -8,6 +8,7 @@ import { recurringPayees, isLargeOneOff } from "@/lib/spend-trend";
 import { buildSearch, matches, sortRows, GROUPS, PAY_TYPES, SORTS, type SearchParams } from "@/server/statement-search";
 import { StatementFilters, type StatementFilterValues } from "@/components/statement-filters";
 import { DeleteStatementButton } from "@/components/delete-statement-button";
+import { countNeedsChecking, needsChecking, needsCheckingClause } from "@/server/statement-issues";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
     .sort((a, b) => b.start.getTime() - a.start.getTime());
   const months = [...new Set(all.flatMap((st) => st.transactions.map((t) => t.date.toISOString().slice(0, 7))))].sort().reverse();
   const allRows = all.flatMap((st) => st.transactions);
+  const toCheck = countNeedsChecking(all); // same list as the statement count, so the numbers agree
   const hitRows = allRows.filter(isHit);
   const hitOut = hitRows.reduce((sum, t) => sum + (t.amountCents < 0 ? -t.amountCents : 0), 0);
   const hitIn = hitRows.reduce((sum, t) => sum + (t.amountCents > 0 ? t.amountCents : 0), 0);
@@ -138,7 +140,7 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
       <div>
         <h1 style={{ margin: 0 }}>Bank statements</h1>
         <p style={{ color: "var(--text-dim)", margin: "4px 0 0" }}>
-          {all.length} statement{all.length === 1 ? "" : "s"}, {allRows.length} transactions. Rebuilt from your uploads; the original PDFs are not kept.
+          {all.length} statement{all.length === 1 ? "" : "s"}, {allRows.length} transactions{needsCheckingClause(toCheck)}. Rebuilt from your uploads; the original PDFs are not kept.
         </p>
       </div>
 
@@ -181,27 +183,34 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
 
       {s.group === "month" && sections.map((st, i) => {
         const rows = sortRows(filtered && !s.showAll ? st.transactions.filter(isHit) : st.transactions, s.sort);
+        // The delete control is a sibling of <details>, laid over the summary row by CSS grid (.stmt-item), so
+        // clicking it never toggles the row and the summary holds no nested buttons. It comes first so keyboard
+        // users reach it before an open table's links.
         return (
-          <details key={st.id} className="card stmt" open={filtered ? st.hits > 0 : i === 0}>
+          <div key={st.id} className="stmt-item">
+          <div className="stmt-row-del">
+            <DeleteStatementButton statementId={st.id} label={monthLabel(st.start)} count={st.transactions.length} />
+          </div>
+          <details className="card stmt" open={filtered ? st.hits > 0 : i === 0}>
             <summary>
               <span className="stmt-title">{monthLabel(st.start)}</span>
               <span className="stmt-meta">
-                {st.issues && <span className="stmt-flag">Needs checking</span>}
+                {needsChecking(st) && <span className="stmt-flag">Needs checking</span>}
                 {st.transactions.length} transactions{st.hits ? <> · <strong>{st.hits} matching</strong></> : null}
               </span>
             </summary>
             <div className="stmt-head">
               <span>Uploaded {st.uploadedAt.toISOString().slice(0, 10)} · {st.transactions.length} transactions</span>
-              <DeleteStatementButton statementId={st.id} label={monthLabel(st.start)} count={st.transactions.length} />
             </div>
-            {st.issues && (
+            {needsChecking(st) && (
               <div className="stmt-issues" role="note">
                 <strong>This statement did not pass every check.</strong> The lines below were saved; doubtful ones are marked for review.
-                <ul>{st.issues.split("\n").map((x) => <li key={x}>{x}</li>)}</ul>
+                <ul>{(st.issues ?? "").split("\n").map((x) => <li key={x}>{x}</li>)}</ul>
               </div>
             )}
             {table(rows, s.showAll)}
           </details>
+          </div>
         );
       })}
 

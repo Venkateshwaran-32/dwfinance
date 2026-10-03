@@ -1,0 +1,1 @@
+- [Audit screenshot traps](audit-screenshot-traps.md) — downscaled full-page shots fake text bugs; demo signup writes to demo.db

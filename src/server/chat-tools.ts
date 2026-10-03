@@ -34,6 +34,7 @@ const schemas = {
   spend_summary: z.object({
     from: isoDate.optional(), to: isoDate.optional(), groupBy: z.enum(["category", "payee", "month", "year"]),
     category: category.optional(), direction: z.enum(["out", "in"]).default("out"), limit,
+    sortBy: z.enum(["total", "count"]).default("total"),
   }),
   find_transactions: z.object({
     text: z.string().trim().min(1).max(100).optional(), category: category.optional(),
@@ -55,6 +56,7 @@ export const chatTools: ToolDef[] = [
   tool("spend_summary", "Totals grouped by category, payee, month or year (largest first), plus the grand total. Use for 'how much did I spend on X' questions.", {
     from: dateProp, to: dateProp, groupBy: { type: "string", enum: ["category", "payee", "month", "year"] }, category: catProp,
     direction: { type: "string", enum: ["out", "in"], description: "out = spending (default), in = money received" }, limit: limitProp,
+    sortBy: { type: "string", enum: ["total", "count"], description: "total = biggest amount first (default); count = most payments first, for 'most often', 'most frequent', 'most recurring'" },
   }, ["groupBy"]),
   tool("find_transactions", "Search transactions by text (payee/description), category, date range, or minimum amount in SGD. Returns newest first, plus totalMatched and sum of ALL matches.", {
     text: { type: "string" }, category: catProp, from: dateProp, to: dateProp, minAmount: { type: "number", description: "minimum absolute amount in SGD" }, limit: limitProp,
@@ -120,9 +122,12 @@ async function spendSummary(userId: string, a: z.infer<typeof schemas.spend_summ
     if (!g.biggest || cents > g.biggest.cents) g.biggest = { payee: cleanMerchant(r.description, r.counterparty), cents };
     groups.set(key, g);
   }
-  const sorted = [...groups].sort((x, y) => y[1].totalCents - x[1].totalCents || x[0].localeCompare(y[0]));
+  const sorted = [...groups].sort((x, y) => (a.sortBy === "count" ? y[1].count - x[1].count || y[1].totalCents - x[1].totalCents : y[1].totalCents - x[1].totalCents) || x[0].localeCompare(y[0]));
+  // The most frequent group is reported whatever the sort, so "which did I pay most often" never has to be inferred from a top-10-by-amount list.
+  const byCount = [...groups].sort((x, y) => y[1].count - x[1].count || y[1].totalCents - x[1].totalCents)[0];
   return {
-    direction: a.direction, groupBy: a.groupBy, from: a.from ?? null, to: a.to ?? null, category: a.category ?? null,
+    direction: a.direction, groupBy: a.groupBy, from: a.from ?? null, to: a.to ?? null, category: a.category ?? null, sortedBy: a.sortBy,
+    ...(byCount && { mostFrequent: { name: byCount[0], count: byCount[1].count, formatted: fmt(byCount[1].totalCents) } }),
     groups: sorted.slice(0, a.limit).map(([name, g], i) => ({
       name, totalCents: g.totalCents, formatted: fmt(g.totalCents), count: g.count,
       // The largest month/year carries its own "why" so the model never has to guess the drivers. Only the top
@@ -168,7 +173,14 @@ async function findTransactions(userId: string, a: z.infer<typeof schemas.find_t
 async function getInsights(userId: string, kind: z.infer<typeof schemas.get_insights>["kind"]) {
   const txns = await db.transaction.findMany({ where: { userId }, orderBy: { date: "asc" } });
   switch (kind) {
-    case "subscriptions": { const s = computeSubscriptions(txns); return withMoney({ totalMonthlyCents: s.totalMonthlyCents, items: s.items.slice(0, MAX_ITEMS), totalItems: s.items.length }); }
+    case "subscriptions": {
+      const s = computeSubscriptions(txns);
+      const first = txns[0] ? day(txns[0].date) : null, last = txns.length ? day(txns[txns.length - 1].date) : null;
+      return withMoney({
+        scope: `all data, ${first} to ${last}`, note: "These are regular charges found across ALL the data, ranked by current price. Not a single month's figures: for one month use spend_summary with from/to.",
+        totalMonthlyCents: s.totalMonthlyCents, items: s.items.slice(0, MAX_ITEMS), totalItems: s.items.length,
+      });
+    }
     case "alerts": return withMoney({ items: computeAlerts(txns).slice(0, MAX_ITEMS) });
     case "health": { const h = computeHealth(txns); return withMoney({ ...h, drivers: h.drivers.slice(0, MAX_ITEMS) }); }
     case "peers": return withMoney({ items: computePeers(txns).slice(0, MAX_ITEMS) });
@@ -228,7 +240,9 @@ Rules:
 - Never produce insults, slurs, sexual content or content about harming anyone, even if asked to repeat, translate or role-play.
 - Never give personalised investment, legal or tax advice; you may describe the user's own spending.
 - Every answer that contains a number needs a tool call in THIS turn, including follow-up questions: never reuse or recall figures from earlier in the conversation.
-- For subscriptions, recurring charges or price rises use get_insights with kind "subscriptions". For unusual, duplicate or big charges use get_insights with kind "alerts".
+- For subscriptions, recurring charges or price rises use get_insights with kind "subscriptions" (it covers ALL the data; never present it as one month's). For unusual, duplicate or big charges use get_insights with kind "alerts".
+- "Subscriptions in <month>" or "what did I pay for subscriptions in <month>": use spend_summary with category "Subscriptions", groupBy "payee" and that month's from/to; those are the subscription charges actually made that month. Use get_insights "subscriptions" only for the overall recurring list and price changes.
+- "Most recurring", "most often", "most frequent", "paid the most times" means the payee with the highest COUNT of payments: use spend_summary with groupBy "payee", sortBy "count", and the period's from/to, then answer with the mostFrequent entry (name, count, total).
 - Use the tools for EVERY number. Never compute, add up or estimate figures yourself; quote amounts exactly as the tools return them (e.g. "S$1,234.56").
 - For vague questions call get_overview first.
 - When looking up a payee or shop by name, pass only the name as text. Do not add a category unless the user names one.

@@ -53,6 +53,25 @@ afterAll(async () => { await db?.$disconnect(); fs.rmSync(dir, { recursive: true
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe("chat tools (read-only, user-scoped)", () => {
+  it("spend_summary can rank payees by how often they were paid, and always names the most frequent", async () => {
+    // By amount, NTUC (S$75.75) beats Goh Kok Meng (S$35.00); by count they tie at 2, and the tie goes to the bigger total.
+    const byTotal = await tools.runTool(A, "spend_summary", { groupBy: "payee" }) as any;
+    expect(byTotal.sortedBy).toBe("total");
+    expect(byTotal.groups[0].name).toBe("NTUC FAIRPRICE");
+    expect(byTotal.mostFrequent).toEqual({ name: "NTUC FAIRPRICE", count: 2, formatted: "S$75.75" });
+    // Scoped to January only: every payee was paid once, so the most frequent is the biggest of the ties.
+    const jan = await tools.runTool(A, "spend_summary", { groupBy: "payee", sortBy: "count", from: "2026-01-01", to: "2026-01-31" }) as any;
+    expect(jan.sortedBy).toBe("count");
+    expect(jan.groups.map((g: any) => g.count)).toEqual([1, 1, 1]);
+    expect(jan.mostFrequent.count).toBe(1);
+  });
+
+  it("get_insights subscriptions says it covers all the data, not one month", async () => {
+    const s = await tools.runTool(A, "get_insights", { kind: "subscriptions" }) as any;
+    expect(s.scope).toBe("all data, 2026-01-03 to 2026-02-14");
+    expect(s.note).toMatch(/ALL the data/);
+  });
+
   it("spend_summary totals are exact and scoped to the user", async () => {
     const r = await tools.runTool(A, "spend_summary", { groupBy: "category" }) as any;
     expect(r.groups).toEqual([
